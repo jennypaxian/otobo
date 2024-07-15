@@ -507,6 +507,7 @@ sub DisplayValueRender {
 
     # get descriptive names for the values, e.g. TicketNumber for TicketID
     my @LongObjectDescriptions;
+    my @Links;
     my $Link;
     {
         my $DFDetails = $Param{DynamicFieldConfig}->{Config};
@@ -520,6 +521,7 @@ sub DisplayValueRender {
                 );
                 push @LongObjectDescriptions, $Description{Long};
                 $Link = $Description{Link};
+                push @Links, $Description{Link};
             }
             else {
                 push @LongObjectDescriptions, '';
@@ -585,7 +587,19 @@ sub DisplayValueRender {
     # set new line separator
     my $ItemSeparator = $HTMLOutput ? '<br/>' : '\n';
 
-    my $Value = join $ItemSeparator, @ReadableValues;
+    $Link = scalar @ObjectIDs == 1 ? $Link : undef;
+
+    my $Value = '';
+    if (! defined $Link) {
+        my $ValueCounter = '0';
+        for my $LinkText (@ReadableValues) {
+            $Value .= '<a href="'.@Links[$ValueCounter].'" target="_blank" class="DynamicFieldLink" title="'.@ReadableTitles[$ValueCounter].'">'.$LinkText.'</a><br/>';
+            $ValueCounter++;
+        }
+    } else {
+        $Value = join $ItemSeparator, @ReadableValues;
+    }
+
     my $Title = join ', ', @ReadableTitles;
 
     if ($ShowValueEllipsis) {
@@ -595,8 +609,7 @@ sub DisplayValueRender {
         $Title .= '...';
     }
 
-    # set field link TODO: (Prio 5) think about multi value
-    $Link = scalar @ObjectIDs == 1 ? $Link : undef;
+    $Title = scalar @ObjectIDs == 1 ? $Title : undef;
 
     # return a data structure
     return {
