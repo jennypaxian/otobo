@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1838,12 +1838,15 @@ sub Footer {
     # Load rich text libraries only when a RTE has been set up
     if ( $Self->{HasRichTextEditor} ) {
 
-        # ckeditor.js is always loaded when rich text is enabled
+        my $JSDirectoryPath = $WebPath . 'js/';
+
+        # ckeditor.js is always loaded when richtext is enabled
         $Self->Block(
             Name => 'RichTextJS',
             Data => {
-                JSDirectory => '',
-                Filename    => 'ckeditor.js',
+                JSDirectory     => $JSDirectoryPath,
+                Filename        => 'ckeditor5.js',
+                WrapperFileName => 'Core.UI.CKEditor5Wrapper.js',
             },
         );
 
@@ -3971,7 +3974,7 @@ sub BuildDateSelection {
     if ( $Prefix !~ /^DynamicField_/ || $Suffix ne '_Template' ) {
         my $DatepickerJS = '
         Core.UI.Datepicker.Init({
-        Day: $("#" + Core.App.EscapeSelector("' . $Prefix . '") + "Day"' .           ( $Suffix ? ' + Core.App.EscapeSelector("' . $Suffix . '")' : '' ) . '),
+            Day: $("#" + Core.App.EscapeSelector("' . $Prefix . '") + "Day"' .       ( $Suffix ? ' + Core.App.EscapeSelector("' . $Suffix . '")' : '' ) . '),
             Month: $("#" + Core.App.EscapeSelector("' . $Prefix . '") + "Month"' .   ( $Suffix ? ' + Core.App.EscapeSelector("' . $Suffix . '")' : '' ) . '),
             Year: $("#" + Core.App.EscapeSelector("' . $Prefix . '") + "Year"' .     ( $Suffix ? ' + Core.App.EscapeSelector("' . $Suffix . '")' : '' ) . '),
             Hour: $("#" + Core.App.EscapeSelector("' . $Prefix . '") + "Hour"' .     ( $Suffix ? ' + Core.App.EscapeSelector("' . $Suffix . '")' : '' ) . '),
@@ -3980,6 +3983,8 @@ sub BuildDateSelection {
             DateInFuture: ' .    ( $ValidateDateInFuture    ? 'true' : 'false' ) . ',
             DateNotInFuture: ' . ( $ValidateDateNotInFuture ? 'true' : 'false' ) . ',
             WeekDayStart: ' . $WeekDayStart . '
+        }, {
+            Disabled: ' . ( $Param{Disabled} ? 'true' : 'false' ) . '
         });';
 
         $Self->AddJSOnDocumentComplete( Code => $DatepickerJS );
@@ -4003,7 +4008,7 @@ sub BuildDateSelection {
                 $Val =~ s/^\s*-// ? 'SubtractDays' : 'SetDate';
 
             $Output .= $Self->Output(
-                Template => "<a class='CallForAction oooQuickDate $Method' data-days='[% Data.Val | html %]'><span>[% Data.Name | html %]</span></a>\n",
+                Template => "<a class='CallForAction oooQuickDate $Method' data-days='[% Data.Val | html %]'><span>[% Translate(Data.Name) | html %]</span></a>\n",
                 Data     => {
                     Val  => $Val,
                     Name => $Name,
@@ -4545,12 +4550,15 @@ sub CustomerFooter {
     # Load rich text libraries only when a RTE has been set up
     if ( $Self->{HasRichTextEditor} ) {
 
+        my $JSDirectoryPath = $WebPath . 'js/';
+
         # ckeditor.js is always loaded when rich text is enabled
         $Self->Block(
             Name => 'RichTextJS',
             Data => {
-                JSDirectory => '',
-                Filename    => 'ckeditor.js',
+                JSDirectory     => $JSDirectoryPath,
+                Filename        => 'ckeditor5.js',
+                WrapperFileName => 'Core.UI.CKEditor5Wrapper.js',
             },
         );
 
@@ -5297,8 +5305,10 @@ sub RichTextDocumentComplete {
     );
 
     # verify HTML document
-    my $HTMLString = $Kernel::OM->Get('Kernel::System::HTMLUtils')->DocumentComplete(
-        String => $StringRef->$*,
+    my $CustomerInterface = ( $Self->{SessionSource} && ( $Self->{SessionSource} eq 'CustomerInterface' ) ) ? 1 : 0;
+    my $HTMLString        = $Kernel::OM->Get('Kernel::System::HTMLUtils')->DocumentComplete(
+        String            => $StringRef->$*,
+        CustomerInterface => $CustomerInterface
     );
 
     # do correct direction
@@ -5707,11 +5717,8 @@ sub _BuildSelectionOptionRefCreate {
     # set Max option
     $OptionRef->{Max} = $Param{Max} || 100;
 
-    # set HTMLQuote option
-    $OptionRef->{HTMLQuote} = 1;
-    if ( defined $Param{HTMLQuote} ) {
-        $OptionRef->{HTMLQuote} = $Param{HTMLQuote};
-    }
+    # set HTMLQuote option, default is 1
+    $OptionRef->{HTMLQuote} = $Param{HTMLQuote} // 1;
 
     return $OptionRef;
 }
@@ -5910,10 +5917,21 @@ sub _BuildSelectionDataRefCreate {
             # already done before the translation
         }
         else {
+
+            # if empty value has been added, remove before sort
+            my $EmptyValue = delete $DataLocal->{''};
+
             @SortKeys = sort {
                 lc( $DataLocal->{$a} // '' )
                     cmp lc( $DataLocal->{$b} // '' )
             } ( keys %{$DataLocal} );
+
+            # if we had an empty value, put it back and add it's
+            # sort-key at the very beginning
+            if ( defined $EmptyValue ) {
+                $DataLocal->{''} = $EmptyValue;
+                unshift @SortKeys, '';
+            }
             $OptionRef->{Sort} = 'AlphanumericValue';
         }
 
@@ -6467,28 +6485,29 @@ sub SetRichTextParameters {
     my $ScreenRichTextWidth  = $Param{Data}->{RichTextWidth}               || $ConfigObject->Get("Frontend::RichTextWidth");
     my $RichTextType         = $Param{Data}->{RichTextType}                || '';
     my $PictureUploadAction  = $Param{Data}->{RichTextPictureUploadAction} || '';
-    my $TextDir              = $Self->{TextDirection}                      || '';
 
     # Declare different toolbars. These declarations will be used in JavaScript.
     my ( @Toolbar, @ToolbarWithoutImage );
 
     if ( $ConfigObject->Get('Frontend::RichText::EnhancedMode') == 1 ) {
         @Toolbar = (
-            'bold',          'italic',            'underline',  'strikethrough', '|',         'bulletedList', 'numberedList', '|',
-            'insertTable',   '|',                 'indent',     'outdent',       'alignment', '|',
+            'heading',       'bold',              'italic', 'underline', 'strikethrough', '|',
+            'bulletedList',  'numberedList',      '|',
+            'insertTable',   '|',                 'indent',     'outdent', 'alignment', '|',
             'link',          'undo',              'redo',       '|',
             'insertImage',   'horizontalLine',    'blockQuote', '|', 'findAndReplace', 'fontColor', 'fontBackgroundColor', 'removeFormat', '|',
             'sourceEditing', 'specialCharacters', '|',
-            'heading',       'fontFamily',        'fontSize', '|', 'codeBlock'
+            'fontFamily',    'fontSize',          '|', 'codeBlock'
         );
 
         @ToolbarWithoutImage = (
-            'bold',           'italic',            'underline', 'strikethrough', '|',         'bulletedList', 'numberedList', '|',
-            'insertTable',    '|',                 'indent',    'outdent',       'alignment', '|',
-            'link',           'undo',              'redo',      '|',
-            'horizontalLine', 'blockQuote',        '|',         'findAndReplace', 'fontColor', 'fontBackgroundColor', 'removeFormat', '|',
+            'heading',        'bold',              'italic', 'underline', 'strikethrough', '|',
+            'bulletedList',   'numberedList',      '|',
+            'insertTable',    '|',                 'indent', 'outdent', 'alignment', '|',
+            'link',           'undo',              'redo',   '|',
+            'horizontalLine', 'blockQuote',        '|',      'findAndReplace', 'fontColor', 'fontBackgroundColor', 'removeFormat', '|',
             'sourceEditing',  'specialCharacters', '|',
-            'heading',        'fontFamily',        'fontSize', '|', 'codeBlock'
+            'fontFamily',     'fontSize',          '|', 'codeBlock'
         );
     }
     else {
@@ -6563,10 +6582,9 @@ sub SetRichTextParameters {
     $Self->AddJSData(
         Key   => 'RichText',
         Value => {
-            Height  => $ScreenRichTextHeight,
-            Width   => $ScreenRichTextWidth,
-            TextDir => $TextDir,
-            Lang    => {
+            Height => $ScreenRichTextHeight,
+            Width  => $ScreenRichTextWidth,
+            Lang   => {
                 SplitQuote  => $LanguageObject->Translate('Split Quote'),
                 RemoveQuote => $LanguageObject->Translate('Remove Quote'),
             },
@@ -6575,6 +6593,9 @@ sub SetRichTextParameters {
             ToolbarWithoutImage => \@ToolbarWithoutImage,
             PictureUploadAction => $PictureUploadAction,
             Type                => $RichTextType,
+            EditorStylesPath    => $ConfigObject->Get("Frontend::RichTextEditorStyles"),
+            ContentStylesPath   => $ConfigObject->Get("Frontend::RichTextArticleStyles"),
+            CustomCSS           => $ConfigObject->Get("Frontend::RichText::DefaultCSS"),
         },
     );
 
@@ -6618,28 +6639,27 @@ sub CustomerSetRichTextParameters {
 
     my $ScreenRichTextHeight = $ConfigObject->Get("Frontend::RichTextHeight");
     my $ScreenRichTextWidth  = $ConfigObject->Get("Frontend::RichTextWidth");
-    my $TextDir              = $Self->{TextDirection}                      || '';
     my $PictureUploadAction  = $Param{Data}->{RichTextPictureUploadAction} || '';
 
     # Declare different toolbars. These declarations will be used in JavaScript.
     my ( @Toolbar, @ToolbarWithoutImage, @ToolbarMidi, @ToolbarMini );
     if ( $ConfigObject->Get('Frontend::RichText::EnhancedMode::Customer') == 1 ) {
         @Toolbar = (
-            'bold',          'italic',            'underline',  'strikethrough', '|',         'bulletedList', 'numberedList', '|',
-            'insertTable',   '|',                 'indent',     'outdent',       'alignment', '|',
-            'link',          'undo',              'redo',       'selectAll',     '-',
-            'insertImage',   'horizontalLine',    'blockQuote', '|',             'findAndReplace', 'fontColor', 'fontBackgroundColor', 'removeFormat', '|',
+            'heading',       'bold',              'italic',     'underline', 'strikethrough', '|', 'bulletedList', 'numberedList', '|',
+            'insertTable',   '|',                 'indent',     'outdent',   'alignment',     '|',
+            'link',          'undo',              'redo',       'selectAll', '-',
+            'insertImage',   'horizontalLine',    'blockQuote', '|',         'findAndReplace', 'fontColor', 'fontBackgroundColor', 'removeFormat', '|',
             'sourceEditing', 'specialCharacters', '-',
-            'heading',       'fontFamily',        'fontSize', '|', 'codeBlock'
+            'fontFamily',    'fontSize',          '|', 'codeBlock'
         );
 
         @ToolbarWithoutImage = (
-            'bold',           'italic',            'underline', 'strikethrough',  '|',         'bulletedList', 'numberedList', '|',
-            'insertTable',    '|',                 'indent',    'outdent',        'alignment', '|',
-            'link',           'undo',              'redo',      'selectAll',      '-',
-            'horizontalLine', 'blockQuote',        '|',         'findAndReplace', 'fontColor', 'fontBackgroundColor', 'removeFormat', '|',
+            'heading',        'bold',              'italic', 'underline',      'strikethrough', '|', 'bulletedList', 'numberedList', '|',
+            'insertTable',    '|',                 'indent', 'outdent',        'alignment',     '|',
+            'link',           'undo',              'redo',   'selectAll',      '-',
+            'horizontalLine', 'blockQuote',        '|',      'findAndReplace', 'fontColor', 'fontBackgroundColor', 'removeFormat', '|',
             'sourceEditing',  'specialCharacters', '-',
-            'heading',        'fontFamily',        'fontSize', '|', 'codeBlock'
+            'fontFamily',     'fontSize',          '|', 'codeBlock'
         );
 
         @ToolbarMidi = (
@@ -6736,10 +6756,9 @@ sub CustomerSetRichTextParameters {
     $Self->AddJSData(
         Key   => 'RichText',
         Value => {
-            Height  => $ScreenRichTextHeight,
-            Width   => $ScreenRichTextWidth,
-            TextDir => $TextDir,
-            Lang    => {
+            Height => $ScreenRichTextHeight,
+            Width  => $ScreenRichTextWidth,
+            Lang   => {
                 SplitQuote => $LanguageObject->Translate('Split Quote'),
             },
             Plugins             => \@Plugins,
@@ -6748,6 +6767,9 @@ sub CustomerSetRichTextParameters {
             ToolbarMidi         => \@ToolbarMidi,
             ToolbarMini         => \@ToolbarMini,
             PictureUploadAction => $PictureUploadAction,
+            EditorStylesPath    => $ConfigObject->Get("CustomerFrontend::RichTextEditorStyles"),
+            ContentStylesPath   => $ConfigObject->Get("CustomerFrontend::RichTextArticleStyles"),
+            CustomCSS           => $ConfigObject->Get("CustomerFrontend::RichText::DefaultCSS"),
         },
     );
 

@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -352,6 +352,7 @@ console.log(22);
     },
 
     {
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
         Name     => 'JSData 1',
         Template => '
 [% PROCESS JSData
@@ -367,6 +368,7 @@ console.log(22);
 ',
     },
     {
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
         Name      => 'JSData 2 with AddJSData()',
         Template  => '',
         AddJSData => {
@@ -376,6 +378,7 @@ console.log(22);
         Result => '',
     },
     {
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
         Name      => 'JSData 3 with AddJSData()',
         Template  => '',
         AddJSData => {
@@ -385,6 +388,7 @@ console.log(22);
         Result => '',
     },
     {
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
         Name      => 'JSData 4 with AddJSData()',
         Template  => '',
         AddJSData => {
@@ -394,14 +398,114 @@ console.log(22);
         Result => '',
     },
     {
-        Name     => 'JSDataInsert',
-        Template => '
-[% PROCESS "JSDataInsert" -%]',
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
+        Name         => 'Boolean: integer 1',
+        Template     => '',
+        AddJSBoolean => {
+            Key   => 'Bool1',
+            Value => 1,
+        },
+        Result => '',
+    },
+    {
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
+        Name         => 'Boolean number 0',
+        Template     => '',
+        AddJSBoolean => {
+            Key   => 'Bool2',
+            Value => 0,
+        },
+        Result => '',
+    },
+    {
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
+        Name         => 'Boolean string q{1}',
+        Template     => '',
+        AddJSBoolean => {
+            Key   => 'Bool3',
+            Value => '1',
+        },
+        Result => '',
+    },
+    {
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
+        Name         => 'Boolean string q{0]',
+        Template     => '',
+        AddJSBoolean => {
+            Key   => 'Bool4',
+            Value => '0',
+        },
+        Result => '',
+    },
+    {
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
+        Name         => 'Boolean string q{0.0], true',
+        Template     => '',
+        AddJSBoolean => {
+            Key   => 'Bool5',
+            Value => '0.0',
+        },
+        Result => '',
+    },
+    {
+        # the accumulated config will be dumped in the test case 'JSDataInsert'
+        Name     => 'Process JSBoolean',
+        Template => <<'END_TEMPLATE',
+[% PROCESS JSBoolean
+    Key   = "ProcessJSBoolean1"
+    Value = 'true',
+%]
+[% PROCESS JSBoolean
+    Key   = "ProcessJSBoolean2"
+    Value = 'false',
+%]
+[% PROCESS JSBoolean
+    Key   = "ProcessJSBoolean3"
+    Value = 0,
+%]
+[% PROCESS JSBoolean
+    Key   = "ProcessJSBoolean4"
+    Value = 0.0,
+%]
+[% PROCESS JSBoolean
+    Key   = "ProcessJSBoolean5"
+    Value = "0",
+%]
+[% PROCESS JSBoolean
+    Key   = "ProcessJSBoolean6"
+    Value = "0.0",
+%]
+[% PROCESS JSBoolean
+    Key   = "ProcessJSBoolean7"
+    Value = 1 > 0,
+%]
+[% PROCESS JSBoolean
+    Key   = "ProcessJSBoolean8"
+    Value = 1 < 0,
+%]
+END_TEMPLATE
         Result => '
-Core.Config.AddConfig({"Config.Test":123,"Config.Test2":[1,2,{"test":"test"}],"JS.String":{"String":"<\/script><\/script>"},"JS.String.CaseInsensitive":{"String":"<\/ScRiPt><\/ScRiPt>"},"Perl.Code":{"Perl":"Data"}});
+
+
+
+
+
+
+
 ',
     },
     {
+        # Dump the Core.Config data that was collected in the preceeding test cases
+        Name     => 'JSDataInsert',
+        Template => '
+[% PROCESS "JSDataInsert" -%]',
+
+        Result => '
+Core.Config.AddConfig({"Bool1":true,"Bool2":false,"Bool3":true,"Bool4":false,"Bool5":true,"Config.Test":123,"Config.Test2":[1,2,{"test":"test"}],"JS.String":{"String":"<\/script><\/script>"},"JS.String.CaseInsensitive":{"String":"<\/ScRiPt><\/ScRiPt>"},"Perl.Code":{"Perl":"Data"},"ProcessJSBoolean1":true,"ProcessJSBoolean2":true,"ProcessJSBoolean3":false,"ProcessJSBoolean4":false,"ProcessJSBoolean5":false,"ProcessJSBoolean6":true,"ProcessJSBoolean7":true,"ProcessJSBoolean8":false});
+',
+    },
+    {
+        # no more config is dumped as the accumulator was emptied in the 'JSDataInsert' test case
         Name     => 'JSDataInsert, no data',
         Template => '[% PROCESS "JSDataInsert" -%]',
         Result   => '',
@@ -550,7 +654,13 @@ for my $Test (@Tests) {
 
     if ( $Test->{AddJSData} ) {
         $LayoutObject->AddJSData(
-            %{ $Test->{AddJSData} },
+            $Test->{AddJSData}->%*,
+        );
+    }
+
+    if ( $Test->{AddJSBoolean} ) {
+        $LayoutObject->AddJSBoolean(
+            $Test->{AddJSBoolean}->%*,
         );
     }
 
@@ -575,10 +685,6 @@ weaken($TemplateObject);
 
 undef $LayoutObject;
 
-is(
-    $TemplateObject,
-    undef,
-    'TemplateObject must be correctly destroyed (no ring references)',
-);
+ok( !defined $TemplateObject, 'TemplateObject must be correctly destroyed (no ring references)' );
 
-done_testing();
+done_testing;

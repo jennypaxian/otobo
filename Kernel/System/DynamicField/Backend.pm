@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -435,6 +435,8 @@ sets a dynamic field value. The values are usually not validated.
         Value              => $Value,                   # Value to store, depends on backend type
         UserID             => 123,
         Set                => (1|0),                    # (optional) whether the value is included in a DynamicField Set
+        ExternalSource     => (1|0),                    # (optional) only for specific backends
+                                                        # attempt to map value from external sources to OTOBO IDs
     );
 
 =cut
@@ -532,6 +534,9 @@ sub ValueSet {
         return;
     }
 
+    # do not set value for script fields automatically; check this directly
+    return 1 if $Self->{$DynamicFieldBackend}{Behaviors}{IsScriptField} && !$Param{Store};
+
     my $OldValue = $Self->ValueGet(
         DynamicFieldConfig => $Param{DynamicFieldConfig},
         ObjectID           => $Param{ObjectID},
@@ -541,13 +546,14 @@ sub ValueSet {
 
     # do not proceed if there is nothing to update, each dynamic field requires special handling to
     #    determine if two values are different or not, this to prevent false update events,
-    #    see bug #9828. Note: (do not send %Param, as $NewValue is a reference and then Value2 could
+    #    see bug #9828. Note: (do not send %Param, as $NewValue is a reference and then Value1 could
     #    have strange values).
     if (
         !$Self->ValueIsDifferent(
             DynamicFieldConfig => $Param{DynamicFieldConfig},
-            Value1             => $OldValue,
-            Value2             => $NewValue,
+            Value1             => $NewValue,
+            Value2             => $OldValue,
+            ExternalSource     => $Param{ExternalSource}
         )
         )
     {
@@ -599,8 +605,10 @@ depending on each field.
     my $Success = $BackendObject->ValueIsDifferent(
         DynamicFieldConfig => $DynamicFieldConfig,      # complete config of the DynamicField
                                                         # must be linked to, e. g. TicketID
-        Value1             => $Value1,                  # Dynamic Field Value
+        Value1             => $Value1,                  # Dynamic Field Value (New/External Source value if ExternalSource is set)
         Value2             => $Value2,                  # Dynamic Field Value
+        ExternalSource     => (1|0),                    # (optional) only for specific backends
+                                                        # attempt to map Value1 from external sources to OTOBO IDs
     );
 
 =cut
@@ -2547,7 +2555,7 @@ sub BuildSelectionDataGet {
     # verify if function is available
     return if !$Self->{$DynamicFieldBackend}->can('BuildSelectionDataGet');
 
-    # call PossibleValuesGet on the specific backend
+    # call BuildSelectionDataGet on the specific backend
     return $Self->{$DynamicFieldBackend}->BuildSelectionDataGet(%Param);
 }
 

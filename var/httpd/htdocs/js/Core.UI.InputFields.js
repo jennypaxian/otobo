@@ -2,7 +2,7 @@
 // OTOBO is a web-based ticketing system for service organisations.
 // --
 // Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-// Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+// Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 // --
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -242,7 +242,7 @@ Core.UI.InputFields = (function (TargetNS) {
 
             // initialize FormUpdate fields
             $('.FormUpdate', $Context).each(function(Index, Element) {
-                $(this).on('change', function () {
+                $(this).off('change.FormUpdate').on('change.FormUpdate', function () {
                     Core.AJAX.FormUpdate($(this).parents('form'), 'AJAXUpdate', $(this).attr('name'));
                 });
             });
@@ -2734,7 +2734,7 @@ Core.UI.InputFields = (function (TargetNS) {
 
                 // initialize FormUpdate
                 if ( $SelectObj.hasClass('FormUpdate') ) {
-                    $SelectObj.on('change', function () {
+                    $SelectObj.off('change.FormUpdate').on('change.FormUpdate', function () {
                         Core.AJAX.FormUpdate($SelectObj.parents('form'), 'AJAXUpdate', $SelectObj.attr('name'));
                     });
                 }

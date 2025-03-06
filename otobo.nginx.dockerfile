@@ -78,11 +78,6 @@ ENV OTOBO_NGINX_WEB_HOST=172.17.0.1
 ENV OTOBO_NGINX_WEB_PORT=5000
 ENV OTOBO_WEB_HTTPS_PORT=443
 
-# Not that these file need to be copied into a container.
-# Alternatively /etc/ssl can be exported as a volume to the host.
-ENV OTOBO_NGINX_SSL_CERTIFICATE=/etc/nginx/ssl/otobo_nginx-selfsigned.crt
-ENV OTOBO_NGINX_SSL_CERTIFICATE_KEY=/etc/nginx/ssl/otobo_nginx-selfsigned.key
-
 WORKDIR /etc/nginx
 
 # move the old config out of the way
@@ -90,6 +85,13 @@ RUN mv conf.d/default.conf conf.d/default.conf.hidden
 
 # The new nginx config, will be modified by /docker-entrypoint.d/20-envsubst-on-templates.sh.
 # See 'Using environment variables in nginx configuration' in https://hub.docker.com/_/nginx .
+#
+# The templates make use of environment variable like
+# OTOBO_NGINX_SSL_CERTIFICATE and OTOBO_NGINX_SSL_CERTIFICATE_KEY. Values for these variable must
+# be passed to the container when it is starting up.
+#
+# Actually there are two config templates in the directory 'templates'. One for plain Nginx and one for Nginx with
+# Kerberos support. The not needed template is moved out of the way.
 COPY templates/ templates
 COPY snippets/  snippets
 
@@ -107,7 +109,7 @@ LABEL org.opencontainers.image.licenses='GNU General Public License v3.0 or late
 LABEL org.opencontainers.image.url='https://github.com/RotherOSS/otobo'
 LABEL org.opencontainers.image.vendor='Rother OSS GmbH'
 
-FROM base AS otobo-nginx
+FROM base AS otobo-nginx-webproxy
 
 # Actually there are two config templates in the directory 'templates'. One for plain Nginx and one for Nginx with
 # Kerberos support. The not needed template is moved out of the way.
@@ -126,7 +128,7 @@ ARG DOCKER_TAG=unspecified
 LABEL org.opencontainers.image.version=$DOCKER_TAG
 
 # Build target with Kerboros support.
-FROM base AS otobo-nginx-kerberos
+FROM base AS otobo-nginx-kerberos-webproxy
 
 # Copy the nginx module ngx_http_auth_spnego_module.so to the official nginx container
 COPY --from=builder-for-kerberos /usr/lib/nginx/modules/ngx_http_auth_spnego_module.so /usr/lib/nginx/modules

@@ -494,7 +494,7 @@
         <Description Translatable="1">Defines the URL rich text editor path.</Description>
         <Navigation>Frontend::Base</Navigation>
         <Value>
-            <Item ValueType="String" ValueRegex="">&lt;OTOBO_CONFIG_Frontend::WebPath&gt;js/thirdparty/ckeditor5-build-classic/</Item>
+            <Item ValueType="String" ValueRegex="">&lt;OTOBO_CONFIG_Frontend::WebPath&gt;js/thirdparty/ckeditor5-44.1.0/</Item>
         </Value>
     </Setting>
     <Setting Name="Frontend::RichTextWidth" Required="1" Valid="1">
@@ -512,31 +512,45 @@
         </Value>
     </Setting>
     <Setting Name="Frontend::RichText::DefaultCSS" Required="1" Valid="1">
-        <Description Translatable="1">Defines the default CSS used for displaying articles.</Description>
+        <Description Translatable="1">Custom CSS styles for RichText articles.</Description>
         <Navigation>Frontend::Base</Navigation>
         <Value>
-            <Item ValueType="String" ValueRegex="">font-family:Geneva,Helvetica,Arial,sans-serif; font-size: 12px;</Item>
+            <Item ValueType="String" ValueRegex=""></Item>
         </Value>
     </Setting>
     <Setting Name="Frontend::RichTextArticleStyles" Required="1" Valid="1" ConfigLevel="200">
-        <Description Translatable="1">Defines the default CSS for creating CKEditor articles.</Description>
+        <Description Translatable="1">Path to CKEditor content CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!</Description>
         <Navigation>Frontend::Base</Navigation>
         <Value>
-            <Item ValueType="String" ValueRegex="">common/css/CKEditor.min.css</Item>
+            <Item ValueType="String" ValueRegex="">common/css/ckeditor5-44.1.0-content.css</Item>
+        </Value>
+    </Setting>
+    <Setting Name="Frontend::RichTextEditorStyles" Required="1" Valid="1" ConfigLevel="200">
+        <Description Translatable="1">Path to CKEditor editor CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!</Description>
+        <Navigation>Frontend::Base</Navigation>
+        <Value>
+            <Item ValueType="String" ValueRegex="">common/css/ckeditor5-44.1.0-editor.css</Item>
         </Value>
     </Setting>
     <Setting Name="CustomerFrontend::RichText::DefaultCSS" Required="1" Valid="1">
-        <Description Translatable="1">Defines the default CSS used for displaying articles.</Description>
+        <Description Translatable="1">Custom CSS styles for RichText articles.</Description>
         <Navigation>Frontend::Base</Navigation>
         <Value>
-            <Item ValueType="String" ValueRegex="">font-family:'Quicksand', sans-serif; font-size: 14px; line-height: 1.5; color: #00023c;</Item>
+            <Item ValueType="String" ValueRegex=""></Item>
         </Value>
     </Setting>
     <Setting Name="CustomerFrontend::RichTextArticleStyles" Required="1" Valid="1" ConfigLevel="200">
-        <Description Translatable="1">Defines the default CSS for creating CKEditor articles.</Description>
+        <Description Translatable="1">Path to CKEditor content CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!</Description>
         <Navigation>Frontend::Base</Navigation>
         <Value>
-            <Item ValueType="String" ValueRegex="">common/css/CKEditor.min.css</Item>
+            <Item ValueType="String" ValueRegex="">common/css/ckeditor5-44.1.0-content.css</Item>
+        </Value>
+    </Setting>
+    <Setting Name="CustomerFrontend::RichTextEditorStyles" Required="1" Valid="1" ConfigLevel="200">
+        <Description Translatable="1">Path to CKEditor editor CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!</Description>
+        <Navigation>Frontend::Base</Navigation>
+        <Value>
+            <Item ValueType="String" ValueRegex="">common/css/ckeditor5-44.1.0-editor.css</Item>
         </Value>
     </Setting>
     <Setting Name="Frontend::RichText::EnhancedMode" Required="1" Valid="1">
@@ -809,6 +823,16 @@
         <Navigation>Core::Email</Navigation>
         <Value>
             <Item ValueType="Password">MailserverPassword</Item>
+        </Value>
+    </Setting>
+    <Setting Name="SendmailModule::SSLVerifyMode" Required="0" Valid="0" ConfigLevel="200">
+        <Description Translatable="1">If any of the "SSL" mechanisms was selected as SendmailModule than declare whether the mail server should be verified.</Description>
+        <Navigation>Core::Email</Navigation>
+        <Value>
+            <Item ValueType="Select" SelectedID="0">
+                <Item ValueType="Option" Value="0" Translatable="1">SSL_VERIFY_NONE - no verification of mail server host</Item>
+                <Item ValueType="Option" Value="1" Translatable="1">SSL_VERIFY_PEER - verify the mail server host</Item>
+            </Item>
         </Value>
     </Setting>
     <Setting Name="SendmailBcc" Required="0" Valid="1" ConfigLevel="200">
@@ -8613,7 +8637,7 @@ via the Preferences button after logging in.
         <Navigation>Frontend::Base::Loader</Navigation>
         <Value>
             <Array>
-                <Item>thirdparty/jquery-3.6.0/jquery.min.js</Item>
+                <Item>thirdparty/jquery-3.7.1/jquery.min.js</Item>
                 <Item>thirdparty/jquery-browser-detection/jquery-browser-detection.js</Item>
                 <Item>thirdparty/jquery-ui-1.13.2/jquery-ui.min.js</Item>
                 <Item>thirdparty/jquery-ui-touch-punch-0.2.3/jquery.ui.touch-punch.js</Item>
@@ -8700,7 +8724,7 @@ via the Preferences button after logging in.
         <Navigation>Frontend::Base::Loader</Navigation>
         <Value>
             <Array>
-                <Item>thirdparty/jquery-3.6.0/jquery.min.js</Item>
+                <Item>thirdparty/jquery-3.7.1/jquery.min.js</Item>
                 <Item>thirdparty/jquery-browser-detection/jquery-browser-detection.js</Item>
                 <Item>thirdparty/jquery-validate-1.19.3/jquery.validate.js</Item>
                 <Item>thirdparty/jquery-ui-1.13.2/jquery-ui.min.js</Item>
@@ -10374,6 +10398,13 @@ via the Preferences button after logging in.
                 <Item Key="State" Translatable="1">Ticket States</Item>
                 <Item Key="Type" Translatable="1">Ticket Types</Item>
             </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="Translations::TranslateParentChild" Required="0" Valid="1">
+        <Description Translatable="1">Defines if parent-child translations for queues and services should be generated automatically.</Description>
+        <Navigation>Core::Translations</Navigation>
+        <Value>
+            <Item ValueType="Checkbox">1</Item>
         </Value>
     </Setting>
     <Setting Name="Translations::AllowModifyAll" Required="1" Valid="1">

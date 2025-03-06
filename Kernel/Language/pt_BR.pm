@@ -8,7 +8,7 @@
 # Copyright (C) 2010-2011 Murilo Moreira de Oliveira <murilo.moreira 60kg gmail.com>
 # Copyright (C) 2013 Alexandre <matrixworkstation@gmail.com>
 # Copyright (C) 2013-2014 Murilo Moreira de Oliveira <murilo.moreira 60kg gmail.com>
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -37,7 +37,7 @@ sub Data {
     $Self->{DateFormatShort}     = '%D/%M/%Y';
     $Self->{DateInputFormat}     = '%D/%M/%Y';
     $Self->{DateInputFormatLong} = '%D/%M/%Y - %T';
-    $Self->{Completeness}        = 0.883968778144701;
+    $Self->{Completeness}        = 0.880065799312098;
 
     # csv separator
     $Self->{Separator}         = ';';
@@ -1351,9 +1351,12 @@ sub Data {
         'The full path of the certification authority directory where the CA certificates are stored in the file system.' =>
             'O caminho completo do diretório da autoridade certificadora onde os certificados AC serão armazenados no sistema de arquivos.',
         'e.g. /opt/otobo/var/certificates/SOAP/CA' => 'ex. /opt/otobo/var/certificates/SOAP/CA',
-        'SSL hostname verification.' => 'Verificação de nome de host SSL.',
+        'SSL hostname verification' => 'Verificação de nome de host SSL',
         'Abort the request if the hostname cannot be verified. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
             'Aborte a solicitação se o nome do host não puder ser verificado. Desative com cuidado! Ignorar a verificação é um risco de segurança! Principalmente para fins de teste no caso de certificados SSL autoassinados ou se você souber o que está fazendo.',
+        'SSL verify mode' => '',
+        'Abort the request if SSL verification fails. Disabling skips SSL verification entirely. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
+            '',
         'Controller mapping for Invoker' => 'Mapeamento do controlador para o invoker',
         'The controller that the invoker should send requests to. Variables marked by a \':\' will get replaced by the data value and passed along with the request. (e.g. /Ticket/:TicketID?UserLogin=:UserLogin&Password=:Password).' =>
             'O controlador para o qual o invoker necessita enviar requisições. Variáveis marcadas com um \':\' serão substituídas pelos valores dos dados e repassadas com a requisição (ex.: /Ticket/:TicketID?UserLogin=:UserLogin&Password=:Password).',
@@ -2120,18 +2123,25 @@ sub Data {
         'If nothing is selected, then there are no permissions in this group (tickets will not be available for the role).' =>
             'Se nada for selecionado, então não há permissões neste grupo (chamados não estarão disponíveis para o papel).',
         'Toggle %s permission for all' => 'Chavear permissão %s para todos',
+        'Read only access to the ticket in this group/queue. The ticket can be found via a search and its TicketZoom can be accessed. If used for a calendar, users can see and export all appointments in the calendar.' =>
+            '',
         'move_into' => 'mover_para',
-        'Permissions to move tickets into this group/queue.' => 'Permissões para mover chamados para este grupo/fila.',
+        'Permissions to move tickets into this group/queue. If used for a calendar, users can modify appointments in the calendar, but without changing the calendar selection.' =>
+            '',
         'create' => 'criar',
-        'Permissions to create tickets in this group/queue.' => 'Permissões para criar chamados neste grupo/fila. ',
+        'Permissions to create tickets in this group/queue. If used for a calendar, users can create and delete appointments in the calendar.' =>
+            '',
         'note' => 'nota',
-        'Permissions to add notes to tickets in this group/queue.' => 'Permissões para adicionar notas aos chamados neste grupo/fila.',
+        'Permissions to add notes to tickets in this group/queue. It also allows agents to be informed via the \'Inform Agents\' section in the Notes.' =>
+            '',
         'owner' => 'proprietário',
-        'Permissions to change the owner of tickets in this group/queue.' =>
-            'Permissões para alterar o proprietário do chamado para este grupo/fila.',
+        'Permissions to be become the owner of tickets in this group/queue. One can be selected as an owner while creating a ticket or changing the owner. Being the owner gives full rw permissions to this ticket.' =>
+            '',
         'priority' => 'prioridade',
-        'Permissions to change the ticket priority in this group/queue.' =>
-            'Permissões para alterar a prioridade do chamado neste grupo/fila.',
+        'Permissions to open the priority action in this group/queue.' =>
+            '',
+        'Full read and write access to the tickets in this group/queue. If used for a calendar, users can manage the calendar itself.' =>
+            '',
 
         # Template: AdminRoleUser
         'Manage Agent-Role Relations' => 'Gerenciar Relações Atendente-Papel',
@@ -2556,6 +2566,13 @@ sub Data {
 
         # Template: AdminUserGroup
         'Manage Agent-Group Relations' => 'Gerenciar Relações Atendente-Grupo',
+        'Permissions to move tickets into this group/queue.' => 'Permissões para mover chamados para este grupo/fila.',
+        'Permissions to create tickets in this group/queue.' => 'Permissões para criar chamados neste grupo/fila. ',
+        'Permissions to add notes to tickets in this group/queue.' => 'Permissões para adicionar notas aos chamados neste grupo/fila.',
+        'Permissions to change the owner of tickets in this group/queue.' =>
+            'Permissões para alterar o proprietário do chamado para este grupo/fila.',
+        'Permissions to change the ticket priority in this group/queue.' =>
+            'Permissões para alterar a prioridade do chamado neste grupo/fila.',
 
         # Template: AgentAppointmentAgendaOverview
         'Agenda Overview' => 'Visão geral da Agenda',
@@ -3037,7 +3054,6 @@ sub Data {
 
         # Template: AgentTicketEmail
         'Create New Email Ticket' => 'Criar Novo Chamado Via E-mail',
-        'Example Template' => 'Exemplo de Modelo',
         'To customer user' => 'Para usuário cliente',
         'Please include at least one customer user for the ticket.' => 'Por favor, inclua ao menos um usuário cliente para este chamado.',
         'Select this customer as the main customer.' => 'Selecione este cliente como principal',
@@ -4110,6 +4126,9 @@ sub Data {
         'The attribute of the referenced object' => '',
         'Select the attribute dynamic field that references an object' =>
             '',
+        'A field of type %s is currently not usable as lens attribute.' =>
+            '',
+        'Field %s is not a reference field.' => '',
         'Not a valid dynamic field.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScreen.pm
@@ -4121,9 +4140,9 @@ sub Data {
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScript.pm
         'Need valid field driver.' => '',
-        'Bad value in RequiredArgs.' => '',
-        'Bad value in PreviewTriggers.' => '',
-        'Bad value in StorageTriggers.' => '',
+        'Erroneous value in RequiredArgs.' => '',
+        'Erroneous value in PreviewTriggers.' => '',
+        'Erroneous value in StorageTriggers.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldSet.pm
         'Missing Dynamic Field.' => '',
@@ -4281,6 +4300,8 @@ sub Data {
         'Need valid Subaction!' => 'Necessita Subação válida!',
         'This field should be an integer.' => 'Este campo deveria ser um inteiro.',
         'File or Directory not found.' => 'Arquivo ou Diretório não encontrado.',
+        'This key is already used' => '',
+        'This key is not allowed' => '',
 
         # Perl Module: Kernel/Modules/AdminGenericInterfaceWebservice.pm
         'There is another web service with the same name.' => 'Há outro web service com o mesmo nome.',
@@ -5018,6 +5039,9 @@ sub Data {
         'Error: the file could not be deleted properly. Please contact your administrator (missing FileID).' =>
             'Erro: o arquivo não pôde ser excluído corretamente. Por favor entrar em contato com seu administrador (Falta ID de Campo)',
 
+        # Perl Module: Kernel/Modules/BasePassword.pm
+        'Can`t remove SessionID.' => 'Não é possível remover o ID de Sessão.',
+
         # Perl Module: Kernel/Modules/CustomerDashboardCommon.pm
         'Registration for tile %s of CustomerDashboard is invalid! Either Module or Template needed.' =>
             '',
@@ -5522,11 +5546,20 @@ sub Data {
         'between' => 'entre',
 
         # Perl Module: Kernel/System/DynamicField/Driver/BaseReference.pm
-        'e.g. Text or Te*t' => 'ex.: Text ou Te*t',
         'Referenced object type' => '',
         'Select the type of the referenced object' => '',
         'Input mode of edit field' => '',
         'Select the input mode for the edit field.' => '',
+        'Link type' => '',
+        'Select the link type.' => '',
+        'Forwards: Referencing (Source) -> Referenced (Target)' => '',
+        'Backwards: Referenced (Source) -> Referencing (Target)' => '',
+        'Link Direction' => '',
+        'The referencing object is the one containing this dynamic field, the referenced object is the one selected as value of the dynamic field.' =>
+            '',
+
+        # Perl Module: Kernel/System/DynamicField/Driver/BaseScript.pm
+        'e.g. Text or Te*t' => 'ex.: Text ou Te*t',
 
         # Perl Module: Kernel/System/DynamicField/Driver/Checkbox.pm
         'Ignore this field.' => 'Ignore este campo.',
@@ -5564,6 +5597,9 @@ sub Data {
 
         # Perl Module: Kernel/System/ImportExport/FormatBackend/JSON.pm
         'Pretty print the exported concatenated JSON' => '',
+
+        # Perl Module: Kernel/System/ImportExport/ObjectBackend/Translations.pm
+        'Empty fields indicate that the current values are kept' => '',
 
         # Perl Module: Kernel/System/MigrateFromOTRS/CloneDB/Backend.pm
         'Sanity checks for database.' => 'Verificações de integridade para banco de dados.',
@@ -6173,7 +6209,6 @@ sub Data {
             'Autenticação falhou! Nome de usuário ou senha foram digitados incorretamente.',
         'Authentication succeeded, but no user data record is found in the database. Please contact the administrator.' =>
             'Autenticação realizada com sucesso, mas não foi encontrado registro deste usuário no banco de dados. Entre em contato com o administrador, por favor.',
-        'Can`t remove SessionID.' => 'Não é possível remover o ID de Sessão.',
         'Logout successful.' => 'Logout com sucesso.',
         'Feature not active!' => 'Funcionalidade não inativa!',
         'Sent password reset instructions. Please check your email.' => 'Enviadas instruções para redefinição de senha. Por favor, verifique seu e-mail.',
@@ -7243,6 +7278,7 @@ Obrigado pela ajuda!
         'Created ticket [%s] in "%s" with priority "%s" and state "%s".' =>
             'Ticket criado [%s] em "%s" com prioridade "%s" e estado "%s".',
         'Croatian' => 'Croata',
+        'Custom CSS styles for RichText articles.' => '',
         'Custom RSS Feed' => 'RSS Feed customizado',
         'Custom text for the page shown to customers that have no tickets yet (if you need those text translated add them to a custom translation module).' =>
             '',
@@ -7460,6 +7496,8 @@ Obrigado pela ajuda!
             'Define se um agente deve ser autorizado a logar se não tiverem segredo compartilhado armazenado em suas preferências e, consequentemente, não estão utlizando autenticação de 2 fatores.',
         'Defines if customers should be allowed to login if they have no shared secret stored in their preferences and therefore are not using two-factor authentication.' =>
             'Define se um cliente deve ser autorizado a logar se não tiverem segredo compartilhado armazenado em suas preferências e, consequentemente, não estão utlizando autenticação de dois fatores.',
+        'Defines if parent-child translations for queues and services should be generated automatically.' =>
+            '',
         'Defines if the communication between this system and the servers that provide cloud services is possible. If set to \'Disable cloud services\', some functionality will be lost such as support data sending, Package Verify™ and product News dashboard widgets, among others.' =>
             '',
         'Defines if the enhanced mode should be used (enables use of table, replace, subscript, superscript, paste from word, etc.) in customer interface.' =>
@@ -7563,8 +7601,6 @@ Obrigado pela ajuda!
         'Defines the data objects avaliable to be translated.' => '',
         'Defines the date input format used in forms (option or input fields).' =>
             'Define o formato de entrada de data utilizado em formulários (opção ou campos de entrada).',
-        'Defines the default CSS for creating CKEditor articles.' => '',
-        'Defines the default CSS used for displaying articles.' => '',
         'Defines the default agent name in the ticket zoom view of the customer interface.' =>
             '',
         'Defines the default auto response type of the article for this operation.' =>
@@ -7748,8 +7784,6 @@ Obrigado pela ajuda!
             'Define os grupos a que todo cliente pertencerá (se CustomerGroupSupport estiver ativado e você não quiser gerenciar todo cliente para estes grupos).',
         'Defines the headers which will be shown to generic content for the requested key.' =>
             '',
-        'Defines the height for the rich text editor component for this screen. Enter number (pixels) or percent value (relative).' =>
-            'Define a altura do componente de edição rich text desta tela. Registre um número (pixels) ou uma porcentagem (relativo).',
         'Defines the height for the rich text editor component. Enter number (pixels) or percent value (relative).' =>
             'Define a altura do componente de edição rich text. Registre um número (pixels) ou uma porcentagem (relativo).',
         'Defines the history comment for the close ticket screen action, which gets used for ticket history in the agent interface.' =>
@@ -7807,6 +7841,8 @@ Obrigado pela ajuda!
         'Defines the hours and week days of the indicated calendar, to count the working time.' =>
             'Define as horas e dias de semana do calendário indicado para contabilizar o tempo de trabalho.',
         'Defines the hours and week days to count the working time.' => 'Define as horas e dias de semana para contabilizar o tempo de trabalho.',
+        'Defines the initial height in pixels for the rich text editor component for this screen.' =>
+            '',
         'Defines the key to be checked with Kernel::Modules::AgentInfo module. If this user preferences key is true, the message is accepted by the system.' =>
             'Define a chave a ser verificada no módulo Kernel::Modules::AgentInfo. Se esta chave de preferência de usuário for verdadeira, então a mensagem é aceita pelo sistema.',
         'Defines the key to check with CustomerAccept. If this user preferences key is true, then the message is accepted by the system.' =>
@@ -8550,6 +8586,8 @@ Obrigado pela ajuda!
             'Se qualquer mecanismo "SMTP" foi selecioando como SendmailModule, o host de e-mail que envia e-mails precisa ser especificado.',
         'If any of the "SMTP" mechanisms was selected as SendmailModule, the port where your mailserver is listening for incoming connections must be specified.' =>
             'Se qualquer mecanismo "SMTP" foi selecioando como SendmailModule, o port que seu servidor de e-mail está escutando para conexões recebidas precisa ser especificado.',
+        'If any of the "SSL" mechanisms was selected as SendmailModule than declare whether the mail server should be verified.' =>
+            '',
         'If enabled debugging information for ACLs is logged.' => 'Se ativado, informações de depuração para ACLs são registradas.',
         'If enabled debugging information for transitions is logged.' => '',
         'If enabled defines the preselected state for customer follow-up in the customer interface.' =>
@@ -8981,6 +9019,10 @@ Obrigado pela ajuda!
         'ParentChild' => 'Pai e Filho',
         'Path for the log file (it only applies if "FS" was selected for LoopProtectionModule and it is mandatory).' =>
             'Caminho para o arquivo de log (aplica apenas se "FS" foi selecionado para LoopProtectionModule e é mandatório).',
+        'Path to CKEditor content CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
+        'Path to CKEditor editor CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
         'Pending time' => 'Data de pendência',
         'People' => 'Pessoas',
         'Performs the configured action for each event (as an Invoker) for each configured web service.' =>
@@ -9131,6 +9173,8 @@ Obrigado pela ajuda!
         'Russian' => 'Russo',
         'S/MIME Certificates' => 'Certificados S/MIME',
         'SLAs' => '',
+        'SSL_VERIFY_NONE - no verification of mail server host' => '',
+        'SSL_VERIFY_PEER - verify the mail server host' => '',
         'Salutations' => 'Saudações',
         'Sample command output' => 'Exemplo de saída de comando',
         'Saves the attachments of articles. "DB" stores all data in the database (not recommended for storing big attachments). "FS" stores the data on the filesystem; this is faster but the webserver should run under the OTOBO user. You can switch between the modules even on a system that is already in production without any loss of data. Note: Searching for attachment names is not supported when "FS" is used. "S3" is experimental.' =>
@@ -9795,8 +9839,8 @@ Obrigado pela ajuda!
         'This option defines the process tickets default state.' => 'Essa opção define o estado padrão para chamados de processo',
         'This option sets additional quick date buttons to pending dates. For ordering purposes one hash entry per array segment has to be set. The key is the button name, value is the value, where a single number n sets the date to n days from now, +n adds n days to the currently set date, and -n subtracts them.' =>
             '',
-        'This option will deny the access to customer company tickets, which are not created by the customer user.' =>
-            'Esta opção negará acesso à tickets da mesma empresa cliente, que não são criados pelo usuário cliente.',
+        'This option will deny the access to customer company tickets, which are not created by the customer user. Please also deactivate "CustomerFrontend::Navigation###CustomerTicketOverview###002-Ticket" so that the button is no longer visible.' =>
+            '',
         'This setting allows you to override the built-in country list with your own list of countries. This is particularly handy if you just want to use a small select group of countries.' =>
             'Essa definição permite que você sobrescreva a lista padrão de países por sua própria lista de países. Isso é particularmente útil quando você quer utilizar um grupo pequeno de países.',
         'This setting is deprecated. Set OTOBOTimeZone instead.' => 'Esta configuração está obsoleta. Definir OTOBOTimeZone em vez disso.',
@@ -9854,8 +9898,8 @@ Obrigado pela ajuda!
             '',
         'Tile registration for the CustomerDashboard. Module is required. Optionally, an order for items can be set. The order must have the name of the item as key and the desired position as integer value.' =>
             '',
-        'Time in seconds that gets added to the actual time if setting a pending-state (default: 86400 = 1 day).' =>
-            'Tempo em segundos que é adicionado ao tempo atual ao definir um estado pendente (default: 86400 = 1 day).',
+        'Time in seconds that gets added to the actual time if setting a pending-state. Examples: 86400 = 1 day or 604800 = 1 week.' =>
+            '',
         'To accept login information, such as an EULA or license.' => 'Aceitar informações de login, como um EULA ou licença.',
         'To download attachments.' => 'Para baixar anexos.',
         'To view HTML attachments.' => 'Para visualizar anexos HTML.',
@@ -9910,6 +9954,8 @@ Obrigado pela ajuda!
         'Uses richtext for viewing and editing ticket notification.' => 'Usar richtext para visualizar e editar notificações de chamados.',
         'Uses richtext for viewing and editing: articles, salutations, signatures, standard templates, auto responses and notifications.' =>
             'Usar RichText quando visualizar e editar: artigos, saudações, assinaturas, modelos, auto respostas e notificações.',
+        'Verify mailserver when securely fetching mails from POP3S/POP3TLS/IMAPS/IMAPTLS mail accounts.' =>
+            '',
         'Vietnam' => 'Vietnamita',
         'View performance benchmark results.' => 'Ver resultados da avaliação de desempenho.',
         'View stored article version.' => '',

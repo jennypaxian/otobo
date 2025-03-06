@@ -3,7 +3,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -30,9 +30,6 @@ otobo.psgi - OTOBO PSGI application
     # new process for every request , useful for development
     plackup --server Shotgun bin/psgi-bin/otobo.psgi
 
-    # with profiling (untested)
-    PERL5OPT=-d:NYTProf NYTPROF='trace=1:start=no' plackup bin/psgi-bin/otobo.psgi
-
 =head1 DESCRIPTION
 
 A PSGI application.
@@ -48,16 +45,11 @@ in F<otobo.web.dockerfile>.
 
 =head1 Profiling
 
-To profile single requests, install Devel::NYTProf and start this script as:
+In order to activate profiling install L<Plack::Middleware::Profiler::NYTProf>
+and activate profiling by assigning C<$ProfilingIsActive> a true value. There is no need
+to start Plack with special options or with a special environment.
 
-    PERL5OPT=-d:NYTProf NYTPROF='trace=1:start=no' plackup bin/psgi-bin/otobo.psgi
-
-For actual profiling append C<&NYTProf=mymarker> to a request.
-This creates a file called nytprof-mymarker.out, which you can process with
-
-    nytprofhtml -f nytprof-mymarker.out
-
-Then point your browser at nytprof/index.html.
+See L<https://metacpan.org/pod/Plack::Middleware::Profiler::NYTProf> for the available options.
 
 =cut
 
@@ -90,6 +82,7 @@ use Plack::Builder   qw(builder enable enable_if mount);
 use Plack::Request   ();
 use Plack::Response  ();
 use Plack::App::File ();
+use Plack::App::Directory;
 
 # OTOBO modules
 use Kernel::Config;                                        # assure that Kernel/Config.pm exists, though the file might be modified later
@@ -108,6 +101,9 @@ eval {
 # between the start of the web server and the first use of $ModuleRefreshMiddleware or $SyncFromS3Middleware.
 Kernel::System::ModuleRefresh->new;
 
+# Activate profiling only when Plack::Middleware::Profiler::NYTProf is installed.
+my $ProfilingIsActive = 0;
+
 # The OTOBO home is determined from the location of otobo.psgi.
 my $Home = abs_path("$Bin/../..");
 
@@ -123,30 +119,6 @@ if ($S3Active) {
 ################################################################################
 # Middlewares
 ################################################################################
-
-# conditionally enable profiling, UNTESTED
-my $NYTProfMiddleware = sub {
-    my $App = shift;
-
-    return sub {
-        my $Env = shift;
-
-        # check whether this request runs under Devel::NYTProf
-        my $ProfilingIsOn = 0;
-        if ( $ENV{NYTPROF} && $Env->{QUERY_STRING} =~ m/NYTProf=([\w-]+)/ ) {
-            $ProfilingIsOn = 1;
-            DB::enable_profile("nytprof-$1.out");
-        }
-
-        # do the work
-        my $Res = $App->($Env);
-
-        # clean up profiling, write the output file
-        DB::finish_profile() if $ProfilingIsOn;
-
-        return $Res;
-    };
-};
 
 # Set a single entry in %ENV.
 # $ENV{GATEWAY_INTERFACE} is used for determining whether a command runs in a web context.
@@ -523,6 +495,7 @@ my $HtdocsApp = builder {
     }
     $SyncFromS3Middleware;
 
+    # serve static files without directory listing
     Plack::App::File->new( root => "$Home/var/httpd/htdocs" )->to_app();
 };
 
@@ -539,8 +512,44 @@ my $OTOBOApp = builder {
     # a simplistic detection whether we are behinde a reverse proxy
     enable_if { $_[0]->{HTTP_X_FORWARDED_HOST} } 'Plack::Middleware::ReverseProxy';
 
-    # conditionally enable profiling
-    enable $NYTProfMiddleware;
+    # enable profiling only when Plack::Middleware::Profiler::NYTProf is installed
+    if ($ProfilingIsActive) {
+
+        # Store the profile id also in a closed over variable,
+        # so that it is available in report_dir
+        my $ProfileID;
+
+        enable 'Profiler::NYTProf',
+
+            # in case that only specific pages should be profiled
+            #enable_profile => sub { return $Env->{QUERY_STRING} =~ m/NYTProf=([\w-]+)/ ? 1 : 0; }, # untested
+
+            # Order by time, in order to make it easier looking at the latest report.
+            # Add a human readable timestamp.
+            # Add the process ID in order to see whether requests ran in the same process.
+            generate_profile_id => sub {
+                my ( $Minute, $Hour, $MonthDay, $MonthZeroBased ) = (gmtime)[ 1, 2, 3, 4 ];
+
+                $ProfileID = sprintf '%02d-%02d-%02d:%02d-%f-%d',
+                $MonthZeroBased + 1,
+                $MonthDay,
+                $Hour,
+                $Minute,
+                Time::HiRes::time(),
+                $$;
+
+                return $ProfileID;
+            },
+
+            # generate a new directory for each report
+            report_dir => sub {
+                my $ReportDir = "var/httpd/htdocs/nytprof/$ProfileID";
+                make_path($ReportDir);
+
+                return "var/httpd/htdocs/nytprof/$ProfileID";
+            },
+            ;
+    }
 
     # Check every 10s for changed Perl modules.
     # Exclude the modules in Kernel/Config/Files as these modules
@@ -636,6 +645,9 @@ builder {
 
     # fixing PATH_INFO
     enable_if { ( $_[0]->{FCGI_ROLE} // '' ) eq 'RESPONDER' } $FixFCGIProxyMiddleware;
+
+    # directory listing for the nytprof directory
+    mount '/otobo-web/nytprof' => Plack::App::Directory->new( root => "$Home/var/httpd/htdocs/nytprof" )->to_app();
 
     # Server the static assets in var/httpd/htdocs.
     mount '/otobo-web' => $HtdocsApp;

@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -32,6 +32,7 @@ our @ObjectDependencies = (
     'Kernel::System::Main',
     'Kernel::System::StandardTemplate',
     'Kernel::System::SysConfig',
+    'Kernel::System::Translations',
     'Kernel::System::Valid',
 );
 
@@ -917,6 +918,13 @@ sub QueueAdd {
         UserID => $Param{UserID},
     );
 
+    my %Queues = $Self->QueueList();
+
+    # generate chained translations automatically
+    $Kernel::OM->Get('Kernel::System::Translations')->TranslateParentChildElements(
+        Strings => [ values %Queues ],
+    );
+
     return $QueueID if !$StandardTemplateID2QueueByCreating;
     return $QueueID if ref $StandardTemplateID2QueueByCreating ne 'ARRAY';
     return $QueueID if !@{$StandardTemplateID2QueueByCreating};
@@ -1259,6 +1267,13 @@ sub QueueUpdate {
         }
     }
 
+    my %Queues = $Self->QueueList();
+
+    # generate chained translations automatically
+    $Kernel::OM->Get('Kernel::System::Translations')->TranslateParentChildElements(
+        Strings => [ values %Queues ],
+    );
+
     return 1;
 }
 
@@ -1419,7 +1434,7 @@ sub NameExistsCheck {
     return 0;
 }
 
-=for stopwords ro rw !qux
+=for stopwords ro rw
 
 =head2 QueueListPermission()
 

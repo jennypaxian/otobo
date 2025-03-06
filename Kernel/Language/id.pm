@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -32,7 +32,7 @@ sub Data {
     $Self->{DateFormatShort}     = '%D/%M/%Y';
     $Self->{DateInputFormat}     = '%D/%M/%Y';
     $Self->{DateInputFormatLong} = '%D/%M/%Y - %T';
-    $Self->{Completeness}        = 0.583008105673972;
+    $Self->{Completeness}        = 0.580230297592343;
 
     # csv separator
     $Self->{Separator}         = ',';
@@ -1346,8 +1346,11 @@ sub Data {
         'The full path of the certification authority directory where the CA certificates are stored in the file system.' =>
             'Path lengkap direktori otoritas sertifikasi di mana sertifikat CA disimpan dalam berkas sistem ',
         'e.g. /opt/otobo/var/certificates/SOAP/CA' => 'Misalnya /opt/otobo/var/certificates/SOAP/CA',
-        'SSL hostname verification.' => '',
+        'SSL hostname verification' => '',
         'Abort the request if the hostname cannot be verified. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
+            '',
+        'SSL verify mode' => '',
+        'Abort the request if SSL verification fails. Disabling skips SSL verification entirely. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
             '',
         'Controller mapping for Invoker' => 'Kontroler pemetaan untuk invoker',
         'The controller that the invoker should send requests to. Variables marked by a \':\' will get replaced by the data value and passed along with the request. (e.g. /Ticket/:TicketID?UserLogin=:UserLogin&Password=:Password).' =>
@@ -2116,18 +2119,25 @@ EMAILADDRESS:info@example.com dari, kepada atau Cc.',
         'If nothing is selected, then there are no permissions in this group (tickets will not be available for the role).' =>
             'Jika tidak ada yang dipilih, maka tidak ada izin di grup ini (tiket tidak akan tersedia untuk peran tersebut).',
         'Toggle %s permission for all' => 'Beralih izin %s untuk semua',
+        'Read only access to the ticket in this group/queue. The ticket can be found via a search and its TicketZoom can be accessed. If used for a calendar, users can see and export all appointments in the calendar.' =>
+            '',
         'move_into' => 'move_into',
-        'Permissions to move tickets into this group/queue.' => 'Pengijinan untuk memindahkan tiket ke dalam grup/queue',
+        'Permissions to move tickets into this group/queue. If used for a calendar, users can modify appointments in the calendar, but without changing the calendar selection.' =>
+            '',
         'create' => 'Menciptkan',
-        'Permissions to create tickets in this group/queue.' => 'Pengijinan untuk membuat tiket di dalam grup/queue ini',
+        'Permissions to create tickets in this group/queue. If used for a calendar, users can create and delete appointments in the calendar.' =>
+            '',
         'note' => 'Catatan',
-        'Permissions to add notes to tickets in this group/queue.' => 'Izin untuk menambahkan catatan ke dalam tiket di grup/queue',
+        'Permissions to add notes to tickets in this group/queue. It also allows agents to be informed via the \'Inform Agents\' section in the Notes.' =>
+            '',
         'owner' => 'Pemilik',
-        'Permissions to change the owner of tickets in this group/queue.' =>
-            'Izin untuk mengubah pemilik tiket di dalam grup/queue ini',
+        'Permissions to be become the owner of tickets in this group/queue. One can be selected as an owner while creating a ticket or changing the owner. Being the owner gives full rw permissions to this ticket.' =>
+            '',
         'priority' => 'Prioritas',
-        'Permissions to change the ticket priority in this group/queue.' =>
-            'Izin untuk mengubah prioritas tiket di dalam grup/queue',
+        'Permissions to open the priority action in this group/queue.' =>
+            '',
+        'Full read and write access to the tickets in this group/queue. If used for a calendar, users can manage the calendar itself.' =>
+            '',
 
         # Template: AdminRoleUser
         'Manage Agent-Role Relations' => 'Mengelola hubungan Agent-Role',
@@ -2552,6 +2562,13 @@ EMAILADDRESS:info@example.com dari, kepada atau Cc.',
 
         # Template: AdminUserGroup
         'Manage Agent-Group Relations' => 'Mengatur hubungan Grup-Agen ',
+        'Permissions to move tickets into this group/queue.' => 'Pengijinan untuk memindahkan tiket ke dalam grup/queue',
+        'Permissions to create tickets in this group/queue.' => 'Pengijinan untuk membuat tiket di dalam grup/queue ini',
+        'Permissions to add notes to tickets in this group/queue.' => 'Izin untuk menambahkan catatan ke dalam tiket di grup/queue',
+        'Permissions to change the owner of tickets in this group/queue.' =>
+            'Izin untuk mengubah pemilik tiket di dalam grup/queue ini',
+        'Permissions to change the ticket priority in this group/queue.' =>
+            'Izin untuk mengubah prioritas tiket di dalam grup/queue',
 
         # Template: AgentAppointmentAgendaOverview
         'Agenda Overview' => '',
@@ -3034,7 +3051,6 @@ bin/otobo.Daemon.pl status\').',
 
         # Template: AgentTicketEmail
         'Create New Email Ticket' => 'Mencipta tiket email baru',
-        'Example Template' => 'Contoh template',
         'To customer user' => 'Untuk pengguna pelanggan',
         'Please include at least one customer user for the ticket.' => 'Tolong sertakan minimal satu pengguna pelanggan untuk tiket',
         'Select this customer as the main customer.' => 'Pilih pelanggan ini sebagai pelanggan utama',
@@ -4107,6 +4123,9 @@ bin/otobo.Daemon.pl status\').',
         'The attribute of the referenced object' => '',
         'Select the attribute dynamic field that references an object' =>
             '',
+        'A field of type %s is currently not usable as lens attribute.' =>
+            '',
+        'Field %s is not a reference field.' => '',
         'Not a valid dynamic field.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScreen.pm
@@ -4118,9 +4137,9 @@ bin/otobo.Daemon.pl status\').',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScript.pm
         'Need valid field driver.' => '',
-        'Bad value in RequiredArgs.' => '',
-        'Bad value in PreviewTriggers.' => '',
-        'Bad value in StorageTriggers.' => '',
+        'Erroneous value in RequiredArgs.' => '',
+        'Erroneous value in PreviewTriggers.' => '',
+        'Erroneous value in StorageTriggers.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldSet.pm
         'Missing Dynamic Field.' => '',
@@ -4278,6 +4297,8 @@ bin/otobo.Daemon.pl status\').',
         'Need valid Subaction!' => '',
         'This field should be an integer.' => '',
         'File or Directory not found.' => '',
+        'This key is already used' => '',
+        'This key is not allowed' => '',
 
         # Perl Module: Kernel/Modules/AdminGenericInterfaceWebservice.pm
         'There is another web service with the same name.' => 'Ada layanan web lain dengan nama yang sama',
@@ -5015,6 +5036,9 @@ bin/otobo.Daemon.pl status\').',
         'Error: the file could not be deleted properly. Please contact your administrator (missing FileID).' =>
             '',
 
+        # Perl Module: Kernel/Modules/BasePassword.pm
+        'Can`t remove SessionID.' => '',
+
         # Perl Module: Kernel/Modules/CustomerDashboardCommon.pm
         'Registration for tile %s of CustomerDashboard is invalid! Either Module or Template needed.' =>
             '',
@@ -5519,11 +5543,20 @@ bin/otobo.Daemon.pl status\').',
         'between' => 'antara',
 
         # Perl Module: Kernel/System/DynamicField/Driver/BaseReference.pm
-        'e.g. Text or Te*t' => '',
         'Referenced object type' => '',
         'Select the type of the referenced object' => '',
         'Input mode of edit field' => '',
         'Select the input mode for the edit field.' => '',
+        'Link type' => '',
+        'Select the link type.' => '',
+        'Forwards: Referencing (Source) -> Referenced (Target)' => '',
+        'Backwards: Referenced (Source) -> Referencing (Target)' => '',
+        'Link Direction' => '',
+        'The referencing object is the one containing this dynamic field, the referenced object is the one selected as value of the dynamic field.' =>
+            '',
+
+        # Perl Module: Kernel/System/DynamicField/Driver/BaseScript.pm
+        'e.g. Text or Te*t' => '',
 
         # Perl Module: Kernel/System/DynamicField/Driver/Checkbox.pm
         'Ignore this field.' => '',
@@ -5561,6 +5594,9 @@ bin/otobo.Daemon.pl status\').',
 
         # Perl Module: Kernel/System/ImportExport/FormatBackend/JSON.pm
         'Pretty print the exported concatenated JSON' => '',
+
+        # Perl Module: Kernel/System/ImportExport/ObjectBackend/Translations.pm
+        'Empty fields indicate that the current values are kept' => '',
 
         # Perl Module: Kernel/System/MigrateFromOTRS/CloneDB/Backend.pm
         'Sanity checks for database.' => '',
@@ -6170,7 +6206,6 @@ bin/otobo.Daemon.pl status\').',
             'Login gagal! Nama pengguna atau kata sandi yang di masukan salah.',
         'Authentication succeeded, but no user data record is found in the database. Please contact the administrator.' =>
             '',
-        'Can`t remove SessionID.' => '',
         'Logout successful.' => 'Logout sukses.',
         'Feature not active!' => 'Fitur tidak aktif!',
         'Sent password reset instructions. Please check your email.' => 'Instruksi untuk mereset kode sandi telah dikirimkan. Silahkan untuk memeriksa email anda.',
@@ -7240,6 +7275,7 @@ Helpdesk Team Anda
         'Created ticket [%s] in "%s" with priority "%s" and state "%s".' =>
             '',
         'Croatian' => 'Kroasia',
+        'Custom CSS styles for RichText articles.' => '',
         'Custom RSS Feed' => 'Kustom RSS feed',
         'Custom text for the page shown to customers that have no tickets yet (if you need those text translated add them to a custom translation module).' =>
             'Kustom teks untuk halaman ditampilkan kepada pelanggan yang tidak memiliki tiket (jika Anda perlu teks yang diterjemahkan menambahkannya ke modul terjemahan khusus).',
@@ -7457,6 +7493,8 @@ Helpdesk Team Anda
             'Mendefinisikan jika agen harus diizinkan untuk login jika mereka tidak memiliki rahasia bersama disimpan dalam preferensi mereka dan oleh karena itu tidak menggunakan 2 faktor yang otentik',
         'Defines if customers should be allowed to login if they have no shared secret stored in their preferences and therefore are not using two-factor authentication.' =>
             'Mendefinisikan jika pelanggan harus diizinkan untuk login jika mereka tidak memiliki rahasia bersama disimpan dalam preferensi mereka dan oleh karena itu tidak menggunakan otentikasi dua faktor.',
+        'Defines if parent-child translations for queues and services should be generated automatically.' =>
+            '',
         'Defines if the communication between this system and the servers that provide cloud services is possible. If set to \'Disable cloud services\', some functionality will be lost such as support data sending, Package Verify™ and product News dashboard widgets, among others.' =>
             '',
         'Defines if the enhanced mode should be used (enables use of table, replace, subscript, superscript, paste from word, etc.) in customer interface.' =>
@@ -7560,8 +7598,6 @@ Helpdesk Team Anda
         'Defines the data objects avaliable to be translated.' => '',
         'Defines the date input format used in forms (option or input fields).' =>
             'Mendefinisikan format tanggal input yang digunakan dalam bentuk (pilihan atau masukan bidang).',
-        'Defines the default CSS for creating CKEditor articles.' => '',
-        'Defines the default CSS used for displaying articles.' => '',
         'Defines the default agent name in the ticket zoom view of the customer interface.' =>
             '',
         'Defines the default auto response type of the article for this operation.' =>
@@ -7746,8 +7782,6 @@ Helpdesk Team Anda
             '',
         'Defines the headers which will be shown to generic content for the requested key.' =>
             '',
-        'Defines the height for the rich text editor component for this screen. Enter number (pixels) or percent value (relative).' =>
-            'Mendefinisikan tinggi untuk komponen editor teks kaya untuk layar ini. Masukkan nomor (piksel) atau nilai persen (relatif).',
         'Defines the height for the rich text editor component. Enter number (pixels) or percent value (relative).' =>
             'Mendefinisikan tinggi untuk orang kaya komponen editor teks. Masukkan nomor (piksel) atau nilai persen (relatif).',
         'Defines the history comment for the close ticket screen action, which gets used for ticket history in the agent interface.' =>
@@ -7805,6 +7839,8 @@ Helpdesk Team Anda
         'Defines the hours and week days of the indicated calendar, to count the working time.' =>
             'Mendefinisikan jam dan minggu hari kalender menunjukkan, untuk menghitung waktu kerja.',
         'Defines the hours and week days to count the working time.' => 'Mendefinisikan jam dan hari minggu untuk menghitung waktu kerja.',
+        'Defines the initial height in pixels for the rich text editor component for this screen.' =>
+            '',
         'Defines the key to be checked with Kernel::Modules::AgentInfo module. If this user preferences key is true, the message is accepted by the system.' =>
             'Mendefinisikan kunci untuk diperiksa dengan Kernel::Modul::AgentInfo. Jika tombol preferensi pengguna ini benar, pesan akan diterima oleh sistem.',
         'Defines the key to check with CustomerAccept. If this user preferences key is true, then the message is accepted by the system.' =>
@@ -8548,6 +8584,8 @@ Helpdesk Team Anda
             'Jika salah satu "SMTP" mekanisme terpilih sebagai Sendmail Modul, yang mailhost yang mengirimkan kiriman harus ditentukan.',
         'If any of the "SMTP" mechanisms was selected as SendmailModule, the port where your mailserver is listening for incoming connections must be specified.' =>
             'Jika salah satu "SMTP" mekanisme terpilih sebagai Sendmail Modul, port mana mail server Anda mendengarkan koneksi masuk harus ditentukan.',
+        'If any of the "SSL" mechanisms was selected as SendmailModule than declare whether the mail server should be verified.' =>
+            '',
         'If enabled debugging information for ACLs is logged.' => 'Jika informasi debugging diaktifkan untuk ACL login.',
         'If enabled debugging information for transitions is logged.' => 'Jika diaktifkan informasi untuk transisi debug login.',
         'If enabled defines the preselected state for customer follow-up in the customer interface.' =>
@@ -8979,6 +9017,10 @@ Helpdesk Team Anda
         'ParentChild' => 'Parentchild',
         'Path for the log file (it only applies if "FS" was selected for LoopProtectionModule and it is mandatory).' =>
             'Path untuk file log (hanya berlaku jika "FS" dipilih untuk loop Modul Perlindungan dan itu adalah wajib).',
+        'Path to CKEditor content CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
+        'Path to CKEditor editor CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
         'Pending time' => '',
         'People' => 'Orang',
         'Performs the configured action for each event (as an Invoker) for each configured web service.' =>
@@ -9129,6 +9171,8 @@ Helpdesk Team Anda
         'Russian' => 'Rusia',
         'S/MIME Certificates' => 'Sertifikat S/MIME',
         'SLAs' => '',
+        'SSL_VERIFY_NONE - no verification of mail server host' => '',
+        'SSL_VERIFY_PEER - verify the mail server host' => '',
         'Salutations' => 'Salam Pembuka',
         'Sample command output' => 'Contoh perintah output',
         'Saves the attachments of articles. "DB" stores all data in the database (not recommended for storing big attachments). "FS" stores the data on the filesystem; this is faster but the webserver should run under the OTOBO user. You can switch between the modules even on a system that is already in production without any loss of data. Note: Searching for attachment names is not supported when "FS" is used. "S3" is experimental.' =>
@@ -9793,8 +9837,8 @@ Helpdesk Team Anda
         'This option defines the process tickets default state.' => 'Opsi ini mendefinisikan tiket proses keadaan default.',
         'This option sets additional quick date buttons to pending dates. For ordering purposes one hash entry per array segment has to be set. The key is the button name, value is the value, where a single number n sets the date to n days from now, +n adds n days to the currently set date, and -n subtracts them.' =>
             '',
-        'This option will deny the access to customer company tickets, which are not created by the customer user.' =>
-            'Opsi ini akan menyangkal akses ke tiket perusahaan pelanggan, yang tidak dibuat oleh pengguna pelanggan.',
+        'This option will deny the access to customer company tickets, which are not created by the customer user. Please also deactivate "CustomerFrontend::Navigation###CustomerTicketOverview###002-Ticket" so that the button is no longer visible.' =>
+            '',
         'This setting allows you to override the built-in country list with your own list of countries. This is particularly handy if you just want to use a small select group of countries.' =>
             'Pengaturan ini memungkinkan Anda untuk menimpa daftar statebuilt-in dengan daftar negara Anda sendiri. Hal ini terutama berguna jika Anda hanya ingin menggunakan kelompok memilih kecil negara.',
         'This setting is deprecated. Set OTOBOTimeZone instead.' => '',
@@ -9852,8 +9896,8 @@ Helpdesk Team Anda
             '',
         'Tile registration for the CustomerDashboard. Module is required. Optionally, an order for items can be set. The order must have the name of the item as key and the desired position as integer value.' =>
             '',
-        'Time in seconds that gets added to the actual time if setting a pending-state (default: 86400 = 1 day).' =>
-            'Waktu dalam detik yang akan ditambahkan ke waktu yang sebenarnya dari pengaturan tertunda-negara (default: 86400 = 1 hari).',
+        'Time in seconds that gets added to the actual time if setting a pending-state. Examples: 86400 = 1 day or 604800 = 1 week.' =>
+            '',
         'To accept login information, such as an EULA or license.' => 'Untuk menerima masuk nya informasi, seperti EULA atau surat izin.',
         'To download attachments.' => 'Untuk unduh lampiran',
         'To view HTML attachments.' => '',
@@ -9908,6 +9952,8 @@ Helpdesk Team Anda
         'Uses richtext for viewing and editing ticket notification.' => 'Menggunakan richtext untuk pemberitahuan melihat dan mengedit tiket.',
         'Uses richtext for viewing and editing: articles, salutations, signatures, standard templates, auto responses and notifications.' =>
             'Menggunakan teks kaya untuk melihat dan mengedit: artikel, salam, tanda tangan, template standar, tanggapan otomatis dan pemberitahuan.',
+        'Verify mailserver when securely fetching mails from POP3S/POP3TLS/IMAPS/IMAPTLS mail accounts.' =>
+            '',
         'Vietnam' => 'Vietnam',
         'View performance benchmark results.' => 'Lihat hasil kinerja benchmark.',
         'View stored article version.' => '',

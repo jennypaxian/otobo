@@ -3,7 +3,7 @@
 # --
 # OTOBO is a web-based ticketing system for service organisations.
 # --
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -109,10 +109,13 @@ function exec_web() {
     #   exec plackup --server Gazelle -R Kernel --port 5000 bin/psgi-bin/otobo.psgi
 
     # For debugging reload the complete application for each request by passing -L Shotgun
-    #   exec plackup -L Shotgun --port 5000 bin/psgi-bin/otobo.psgi
+    #   exec plackup --loader Shotgun --port 5000 bin/psgi-bin/otobo.psgi
 
     # For production use the web server Gazelle, which is implemented in C.
-    # The special loader Plack::Loader::SyncWithS3 is activated only when S3 is active. That loader module checks for updates in S3.
+    #   exec plackup --server Gazelle --env deployment --port 5000 bin/psgi-bin/otobo.psgi
+
+    # The special loader Plack::Loader::SyncWithS3 is activated only when S3 is active. That loader module
+    # checks for updates in S3.
     s3_active=$(perl -I . -I Kernel/cpan-lib/ -MKernel::Config -E 'my $Conf = Kernel::Config->new(Level => q{Clear}); print $Conf->Get(q{Storage::S3::Active});')
     if [[ "$s3_active" -eq "1" ]]; then
         exec plackup --server Gazelle --env deployment --port 5000 -I /opt/otobo -I /opt/otobo/Kernel/cpan-lib --loader SyncWithS3  bin/psgi-bin/otobo.psgi
@@ -162,6 +165,11 @@ function copy_otobo_next() {
     cp --no-clobber $OTOBO_HOME/Kernel/Config.pm.docker.dist $OTOBO_HOME/Kernel/Config.pm
     cp --no-clobber $OTOBO_HOME/Kernel/Config.pod.dist       $OTOBO_HOME/Kernel/Config.pod
 
+    # Clean up files that might be lingering from previous versions of OTOBO.
+    # Currently there is only a single file. OTOBODynamicFields.xml has been
+    # replaced by DynamicFields.xml.
+    rm -f "$OTOBO_HOME/Kernel/Config/Files/XML/OTOBODynamicFields.xml"
+
     # Indicate the time when copy_otobo_next() was last called. This is used primarily
     # for the OTOBO daemon who needs to know that /opt/otobo has been copied completely.
     touch $OTOBO_HOME/.copy_otobo_next_finished
@@ -169,7 +177,7 @@ function copy_otobo_next() {
 
 function do_update_tasks() {
 
-    # Reinstall package, rebuild config, purge cache and loader files.
+    # Reinstall packages, rebuild config, purge the cache and the cached loader files.
     # Note that this works only if OTOBO has been properly configured,
     # because some commands need access to the database.
     {

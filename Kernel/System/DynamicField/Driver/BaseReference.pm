@@ -1,7 +1,7 @@
 # --
 # OTOBO is a web-based ticketing system for service organisations.
 # --
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -36,10 +36,13 @@ use Kernel::System::VariableCheck qw(IsArrayRefWithData IsStringWithData);
 
 our @ObjectDependencies = (
     'Kernel::Config',
+    'Kernel::Language',
     'Kernel::Output::HTML::Layout',
     'Kernel::System::DB',
     'Kernel::System::DynamicFieldValue',
+    'Kernel::System::DynamicField::Backend',
     'Kernel::System::Log',
+    'Kernel::System::LinkObject',
     'Kernel::System::Web::FormCache',
 );
 
@@ -57,6 +60,30 @@ This dynamic field driver module implements the public interface of L<Kernel::Sy
 Please look there for a detailed reference of the functions.
 
 =cut
+
+sub ValueSet {
+    my ( $Self, %Param ) = @_;
+
+    my $Result = $Self->SUPER::ValueSet(%Param);
+
+    if ($Result) {
+
+        # optional classic LinkOBject links
+        my $DynamicFieldConfig = $Param{DynamicFieldConfig};
+
+        my $ValueType = ref( $Param{Value} );
+        my $Value     = $ValueType && $ValueType eq 'ARRAY' ? $Param{Value}->[0] : $Param{Value};
+
+        $Self->_CreateAutoLinkObjectLink(
+            UserID       => $Param{UserID},
+            ObjectID     => $Param{ObjectID},
+            DynamicField => $DynamicFieldConfig,
+            Value        => $Value,
+        );
+    }
+
+    return $Result;
+}
 
 sub ValueValidate {
     my ( $Self, %Param ) = @_;
@@ -159,13 +186,25 @@ sub SearchSQLGet {
     }
 
     my $DBObject = $Kernel::OM->Get('Kernel::System::DB');
-    my $Lower    = '';
-    if ( $DBObject->GetDatabaseFunction('CaseSensitive') ) {
-        $Lower = 'LOWER';
-    }
 
-    my $SQL = " $Lower($Param{TableAlias}.$Self->{TableAttribute}) $Operators{ $Param{Operator} } ";
-    $SQL .= "$Lower('" . $DBObject->Quote( $Param{SearchTerm} ) . "') ";
+    # TODO: this should be changed to bind variables
+    my $SQL;
+    if ( $Self->{TableAttribute} eq 'value_int' ) {
+        $SQL = " $Param{TableAlias}.$Self->{TableAttribute} $Operators{ $Param{Operator} } $Param{SearchTerm}";
+    }
+    elsif ( $Self->{TableAttribute} eq 'value_text' ) {
+        my $Lower = '';
+        if ( $DBObject->GetDatabaseFunction('CaseSensitive') ) {
+            $Lower = 'LOWER';
+        }
+
+        $SQL = " $Lower($Param{TableAlias}.$Self->{TableAttribute}) $Operators{ $Param{Operator} } ";
+        $SQL .= "$Lower('" . $DBObject->Quote( $Param{SearchTerm} ) . "') ";
+    }
+    else {
+        $SQL = " $Param{TableAlias}.$Self->{TableAttribute} $Operators{ $Param{Operator} } '";
+        $SQL .= $DBObject->Quote( $Param{SearchTerm} ) . "' ";
+    }
 
     return $SQL;
 }
@@ -180,9 +219,8 @@ sub EditFieldRender {
     my ( $Self, %Param ) = @_;
 
     # take config from field config
-    my $DFDetails  = $Param{DynamicFieldConfig}->{Config};
-    my $FieldName  = 'DynamicField_' . $Param{DynamicFieldConfig}->{Name};
-    my $FieldLabel = $Param{DynamicFieldConfig}->{Label};
+    my $DFDetails = $Param{DynamicFieldConfig}{Config};
+    my $FieldName = 'DynamicField_' . $Param{DynamicFieldConfig}{Name};
 
     my $Value = '';
 
@@ -263,9 +301,14 @@ sub EditFieldRender {
 
         if ( $DFDetails->{MultiValue} ) {
             for my $ValueIndex ( 0 .. $#{$Value} ) {
+                my $DataValues = $Self->BuildSelectionDataGet(
+                    DynamicFieldConfig => $Param{DynamicFieldConfig},
+                    PossibleValues     => $PossibleValues,
+                    Value              => $Value->[$ValueIndex],
+                );
                 my $FieldID = $FieldName . '_' . $ValueIndex;
                 push @SelectionHTML, $Param{LayoutObject}->BuildSelection(
-                    Data       => $PossibleValues || {},
+                    Data       => $DataValues,
                     Sort       => 'AlphanumericValue',
                     Disabled   => $Param{Readonly},
                     Name       => $FieldName,
@@ -278,8 +321,13 @@ sub EditFieldRender {
         }
         else {
             my @SelectedIDs = grep {$_} $Value->@*;
+            my $DataValues  = $Self->BuildSelectionDataGet(
+                DynamicFieldConfig => $Param{DynamicFieldConfig},
+                PossibleValues     => $PossibleValues,
+                Value              => \@SelectedIDs,
+            );
             push @SelectionHTML, $Param{LayoutObject}->BuildSelection(
-                Data       => $PossibleValues || {},
+                Data       => $DataValues,
                 Sort       => 'AlphanumericValue',
                 Disabled   => $Param{Readonly},
                 Name       => $FieldName,
@@ -319,8 +367,9 @@ sub EditFieldRender {
             # The visible value depends on the referenced object
             my %Description = $Self->ObjectDescriptionGet(
                 DynamicFieldConfig => $DFDetails,
+                LayoutObject       => $Param{LayoutObject},
                 ObjectID           => $ReferencedObjectID,
-                UserID             => 1,                     # TODO: what about Permission check
+                UserID             => 1,                      # TODO: what about Permission check
             );
             $ValueEscaped = $Param{LayoutObject}->Ascii2Html(
                 Text => $Description{Long},
@@ -435,6 +484,10 @@ sub EditFieldValueValidate {
             Key          => 'RenderedValue_DynamicField_' . $DFName,
         );
 
+        if ( $DynamicFieldConfig->{Config}{PossibleNone} ) {
+            push $LastSearchResults->@*, '';
+        }
+
         # in set case, we fetch the template values and either concat them to the search results
         #   or, if no search results are present, use the template values entirely
         if ( defined $Param{SetIndex} ) {
@@ -510,7 +563,6 @@ sub DisplayValueRender {
     my @Links;
     my $Link;
     {
-        my $DFDetails = $Param{DynamicFieldConfig}->{Config};
         for my $ObjectID (@ObjectIDs) {
             if ($ObjectID) {
                 my %Description = $Self->ObjectDescriptionGet(
@@ -624,9 +676,8 @@ sub SearchFieldRender {
     my ( $Self, %Param ) = @_;
 
     # take config from field config
-    my $DFDetails  = $Param{DynamicFieldConfig}->{Config};
-    my $FieldName  = 'Search_DynamicField_' . $Param{DynamicFieldConfig}->{Name};
-    my $FieldLabel = $Param{DynamicFieldConfig}->{Label};
+    my $FieldName  = 'Search_DynamicField_' . $Param{DynamicFieldConfig}{Name};
+    my $FieldLabel = $Param{DynamicFieldConfig}{Label};
 
     # set the field value
     my $Value = $Param{DefaultValue} // '';
@@ -660,16 +711,10 @@ sub SearchFieldRender {
 <input type="text" class="$FieldClass" id="Autocomplete_$FieldName" name="Autocomplete_$FieldName" title="$FieldLabelEscaped" value="$ValueEscaped" />
 EOF
 
-    my $AdditionalText;
-    if ( $Param{UseLabelHints} ) {
-        $AdditionalText = Translatable('e.g. Text or Te*t');
-    }
-
     # call EditLabelRender on the common Driver
     my $LabelString = $Self->EditLabelRender(
         %Param,
-        FieldName      => $FieldName,
-        AdditionalText => $AdditionalText,
+        FieldName => $FieldName,
     );
 
     return {
@@ -989,6 +1034,84 @@ sub GetFieldTypeSettings {
             };
     }
 
+    my $LinkObject            = $Kernel::OM->Get('Kernel::System::LinkObject');
+    my $LanguageObject        = $Kernel::OM->Get('Kernel::Language');
+    my $ReferencingObjectType = $Param{ObjectType};
+
+    # Create the selectable type list from the possible types from the SysConfig.
+    my @SelectionData;
+
+    # get possible types list,
+    # actually the order of Object1 and Object2 is not relevant
+    my $Object1           = $ReferencingObjectType        =~ s/^ITSMConfigItemVersion$/ITSMConfigItem/r;
+    my $Object2           = $Self->{ReferencedObjectType} =~ s/^ITSMConfigItemVersion$/ITSMConfigItem/r;
+    my %PossibleTypesList = $LinkObject->PossibleTypesList(
+        Object1 => $Object1,    # the entity that holds the Reference dynamic field can be a config item or a ticket
+        Object2 => $Object2,    # the referenced object
+    );
+
+    # only show selection if there are any valid link types
+    if ( scalar keys %PossibleTypesList != 0 ) {
+
+        POSSIBLETYPE:
+        for my $PossibleType ( sort { lc $a cmp lc $b } keys %PossibleTypesList ) {
+
+            # look up type id,
+            # insert the name into the table link_type if it does not exist yet
+            my $TypeID = $LinkObject->TypeLookup(
+                Name   => $PossibleType,
+                UserID => 1,               # TODO: get the actual id of the current user
+            );
+
+            # get type
+            my %Type = $LinkObject->TypeGet(
+                TypeID => $TypeID,
+                UserID => $Self->{UserID},
+            );
+
+            push @SelectionData,
+                {
+                    Key   => $PossibleType,
+                    Value => "Source -$Type{SourceName}\-> Target ($Type{TargetName})",
+                };
+        }
+
+        push @GenericSettings,
+            {
+                InputType       => 'Selection',
+                ConfigParamName => $Self->{ReferencedObjectType} =~ '^ITSMConfigItem' ? 'LinkType' : 'LinkObjectForReferenceType',
+                Label           => Translatable('Link type'),
+                Explanation     => Translatable('Select the link type.'),
+                SelectionData   => \@SelectionData,
+                PossibleNone    => 1,
+            };
+
+        my @SelectionDirectionData = (
+            {
+                Key   => 'ReferencingIsSource',
+                Value => Translatable('Forwards: Referencing (Source) -> Referenced (Target)'),
+            },
+            {
+                Key   => 'ReferencingIsTarget',
+                Value => Translatable('Backwards: Referenced (Source) -> Referencing (Target)'),
+            },
+        );
+
+        push @GenericSettings,
+            {
+                ConfigParamName => 'LinkDirection',
+                Label           => Translatable('Link Direction'),
+                Explanation     =>
+                Translatable('The referencing object is the one containing this dynamic field, the referenced object is the one selected as value of the dynamic field.'),
+                InputType     => 'Selection',
+                SelectionData => \@SelectionDirectionData,
+                DefaultKey    => 'ReferencingIsSource',
+                PossibleNone  => 0,
+            };
+    }
+
+    # EO ITSMconfigurationmanagement
+
     return @GenericSettings;
 }
 
@@ -1008,6 +1131,12 @@ A wrapper for SearchObjects method.
 
 sub PossibleValuesGet {
     my ( $Self, %Param ) = @_;
+
+    # if no ParamObject and no Object data are present, we assume existing possible values as valid
+    #   this prevents performing a search with empty result and thus overwriting of valid values in FormCache
+    if ( $Param{PossibleValues} && !( $Param{ParamObject} || $Param{Object} ) ) {
+        return $Param{PossibleValues};
+    }
 
     my %PossibleValues;
 
@@ -1049,6 +1178,7 @@ sub PossibleValuesGet {
     for my $ResultItem (@SearchResult) {
         my %ItemDescription = $Self->ObjectDescriptionGet(
             DynamicFieldConfig => $Param{DynamicFieldConfig},
+            LayoutObject       => $LayoutObject,
             ObjectID           => $ResultItem,
             UserID             => 1,
         );
@@ -1110,7 +1240,7 @@ sub GetFieldState {
         Object             => {
 
             # ticket specific
-            CustomerUserID => $Param{GetParam}->{CustomerUser},
+            CustomerUserID => $Param{CustomerUser} || $Param{GetParam}{CustomerUserID},
 
             # general
             $Param{GetParam}->%*,
@@ -1126,6 +1256,156 @@ sub GetFieldState {
     }
 
     return %Return;
+}
+
+sub _CreateAutoLinkObjectLink {
+
+    my ( $Self, %Param ) = @_;
+
+    my $LinkObject = $Kernel::OM->Get('Kernel::System::LinkObject');
+
+    for my $Needed (qw(DynamicField ObjectID UserID)) {
+        if ( !$Param{$Needed} ) {
+
+            $Kernel::OM->Get('Kernel::System::Log')->Log(
+                Priority => 'debug',
+                Message  => "Missing Input Param '$Needed' needed to create Link\n",
+            );
+            return;
+        }
+    }
+
+    return unless $Param{Value};
+
+    my $DynamicField  = $Param{DynamicField};
+    my $LinkDirection = $DynamicField->{Config}->{LinkDirection};
+    my $LinkType      = $DynamicField->{Config}->{LinkObjectForReferenceType} || $DynamicField->{Config}->{LinkType};
+
+    # if linking disabled in DF config, do nothing
+    return unless $LinkType;
+
+    # object types for linking
+    my $TargetObject = $DynamicField->{FieldType};
+    $TargetObject =~ s/^ConfigItem/ITSMConfigItem/;
+    $TargetObject =~ s/^ITSMConfigItemVersion/ITSMConfigItem/;
+
+    my $SourceObject = $DynamicField->{ObjectType};
+    $SourceObject =~ s/^ConfigItem/ITSMConfigItem/;
+    $SourceObject =~ s/^ITSMConfigItemVersion/ITSMConfigItem/;
+
+    # object key IDs for linking
+    my $TargetKey = $Self->_GetEntityIDForLinking(
+        LinkKey  => 'Target',
+        TypeName => $DynamicField->{FieldType},
+        ID       => $Param{Value},
+    );
+
+    my $SourceKey = $Self->_GetEntityIDForLinking(
+        LinkKey  => 'Source',
+        TypeName => $DynamicField->{ObjectType},
+        ID       => $Param{ObjectID},
+    );
+
+    # link direction
+    if ( $LinkDirection ne 'ReferencingIsSource' ) {
+
+        # swap variables around
+        ( $SourceObject, $TargetObject ) = ( $TargetObject, $SourceObject );
+        ( $SourceKey,    $TargetKey )    = ( $TargetKey,    $SourceKey );
+    }
+
+    # check if link already exists
+
+    my $LinkList = $LinkObject->LinkList(
+        Object  => $SourceObject,
+        Key     => $SourceKey,
+        Object2 => $TargetObject,
+        State   => 'Valid',
+        UserID  => $Param{UserID},
+    );
+
+    my $Links = $LinkList->{$SourceObject}->{$LinkType};
+    for my $LinkTypeKey ( keys %$Links ) {
+
+        my $References = $Links->{$LinkTypeKey};
+        for my $Key ( keys %$References ) {
+
+            return unless $Key != $SourceKey;
+        }
+    }
+
+    # and the other way round
+    $Links = $LinkList->{$TargetObject}->{$LinkType};
+    for my $LinkTypeKey ( keys %$Links ) {
+
+        my $References = $Links->{$LinkTypeKey};
+        for my $Key ( keys %$References ) {
+
+            return unless $Key != $TargetKey;
+        }
+    }
+
+    # do the actual linking
+    my $Success = $LinkObject->LinkAdd(
+        SourceObject => $SourceObject,    # eg 'Ticket',
+        SourceKey    => $SourceKey,
+        TargetObject => $TargetObject,    # eg 'ITSMConfigItem',
+        TargetKey    => $TargetKey,
+        Type         => $LinkType,        # eg 'RelevantTo',
+        State        => 'Valid',
+        UserID       => $Param{UserID},
+    );
+
+    return 1 if $Success;
+
+    $Kernel::OM->Get('Kernel::System::Log')->Log(
+        Priority => 'error',
+        Message  => "Unable to create Link $SourceObject ($SourceKey) -- $LinkType -> $TargetObject $TargetKey\n",
+    );
+
+    return;
+}
+
+sub _GetEntityIDForLinking {
+
+    my ( $Self, %Param ) = @_;
+
+    my $ID       = $Param{ID};
+    my $TypeName = $Param{TypeName};
+    my $LinkKey  = $Param{LinkKey};
+
+    # determine name for the K/S/DynamicField/ObjectType/* ObjectTypeHandler class
+    # upgrade ConfigItem typenames to long form (starting with ITSM*)
+    # and treat ConfigItemVersion like ConfigItem
+    $TypeName =~ s/^ConfigItem/ITSMConfigItem/;
+    $TypeName =~ s/^ITSMConfigItemVersion/ITSMConfigItem/;
+
+    # BackendObject has all the ObjectType Handlers loaded as properties
+    my $BackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
+
+    # determine the property name for our typename
+    my $BackendTypeObjectKey = "DynamicField" . $TypeName . 'HandlerObject';
+
+    # if there is a TypeObject handler object ...
+    if ( exists $BackendObject->{$BackendTypeObjectKey} ) {
+
+        my $BackendTypeObject = $BackendObject->{$BackendTypeObjectKey};
+
+        # ask TypeObject if it supports linking ID resolution
+        my $HasGetEntityIDforLinking = $BackendTypeObject->can('GetEntityIDforLinking');
+
+        if ($HasGetEntityIDforLinking) {
+
+            return $BackendTypeObject->GetEntityIDforLinking(
+                ID       => $ID,
+                LinkKey  => $LinkKey,
+                TypeName => $Param{TypeName},
+            );
+        }
+    }
+
+    # otherwise ID stays as is
+    return $ID;
 }
 
 1;

@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -19,15 +19,22 @@ package Kernel::System::MailAccount::POP3TLS;
 use strict;
 use warnings;
 
+# core modules
+
+# CPAN modules
 use Net::POP3;
+use IO::Socket::SSL ();
+
+# OTOBO modules
 
 use parent qw(Kernel::System::MailAccount::POP3);
 
 our @ObjectDependencies = (
+    'Kernel::Config',
     'Kernel::System::Log',
 );
 
-# Use Net::SSLGlue::POP3 on systems with older Net::POP3 modules that cannot handle POP3TLS.
+# Use Net::SSLGlue::POP3 on systems with older Net::POP3 modules that cannot handle SSL.
 BEGIN {
     if ( !defined &Net::POP3::starttls ) {
         ## nofilter(TidyAll::Plugin::OTOBO::Perl::Require)
@@ -49,25 +56,27 @@ sub Connect {
         }
     }
 
-    my $Type = 'POP3TLS';
+    my $Type          = 'POP3STLS';
+    my $SSLVerifyMode = $Kernel::OM->Get('Kernel::Config')->Get('PostMasterSSLVerifyMode') // IO::Socket::SSL::SSL_VERIFY_NONE();
 
     # connect to host
+    # A IO::Socket::INET socket is created first, later a STLS command will be dispatched and
+    # the socket is upgraded to IO::Socket::SSL.
     my $PopObject = Net::POP3->new(
         $Param{Host},
         Timeout => $Param{Timeout},
         Debug   => $Param{Debug},
     );
 
-    if ( !$PopObject ) {
-        return (
-            Successful => 0,
-            Message    => "$Type: Can't connect to $Param{Host}"
-        );
-    }
+    return (
+        Successful => 0,
+        Message    => "$Type: Can't connect to $Param{Host}"
+    ) unless $PopObject;
 
+    # upgrade to SSL
     $PopObject->starttls(
         SSL             => 1,
-        SSL_verify_mode => 0,
+        SSL_verify_mode => $SSLVerifyMode,
     );
 
     # authentication

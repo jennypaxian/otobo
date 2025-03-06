@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -37,6 +37,7 @@ use Kernel::System::VariableCheck qw(IsArrayRefWithData IsHashRefWithData);
 
 our @ObjectDependencies = (
     'Kernel::Config',
+    'Kernel::Output::HTML::Layout',
     'Kernel::System::DynamicField',
     'Kernel::System::DynamicField::Backend',
     'Kernel::System::Log',
@@ -277,8 +278,12 @@ sub ObjectDescriptionGet {
         # prepare string as configured
         my $DisplayType = $Param{DynamicFieldConfig}{Config}{DisplayType};
         if ( $DisplayType eq 'TicketNumber' ) {
-            $Descriptions{Normal} = "Ticket#$Ticket{TicketNumber}";
-            $Descriptions{Long}   = "Ticket#$Ticket{TicketNumber}";
+            my $TicketStrg = 'Ticket';
+            if ( $Param{LayoutObject} ) {
+                $TicketStrg = $Param{LayoutObject}{LanguageObject}->Translate($TicketStrg);
+            }
+            $Descriptions{Normal} = "$TicketStrg#$Ticket{TicketNumber}";
+            $Descriptions{Long}   = "$TicketStrg#$Ticket{TicketNumber}";
         }
         elsif ( $DisplayType eq 'QueueTicketNumber' ) {
             $Descriptions{Normal} = "$Ticket{Queue}: $Ticket{TicketNumber}";

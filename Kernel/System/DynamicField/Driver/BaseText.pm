@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -64,7 +64,7 @@ by using Kernel::System::DynamicField::Backend->new();
 =cut
 
 sub new {
-    my ( $Type, %Param ) = @_;
+    my ($Type) = @_;
 
     # allocate new hash for object
     my $Self = bless {}, $Type;
@@ -88,8 +88,7 @@ sub new {
     };
 
     # get the Dynamic Field Backend custom extensions
-    # allow passing ExtensionClass, relevant for ActivityID and ProcessID
-    my ($ShortType) = $Param{ExtensionClass} // reverse split /::/, $Type;    # 'Text' or 'TextArea'
+    my ($ShortType) = reverse split /::/, $Type;    # 'Text' or 'TextArea'
     my $DynamicFieldDriverExtensions = $Kernel::OM->Get('Kernel::Config')->Get("DynamicFields::Extension::Driver::$ShortType");
 
     EXTENSION:

@@ -5,7 +5,7 @@
 # Required for compressed file generation (in perlcore).
 requires 'Archive::Tar';
 
-# Required for compressed file generation.
+# Required for compressed file generation. Needed by Excel::Writer::XSLX, which is used in Kernel::System::CSV
 requires 'Archive::Zip';
 
 # Support for readonly Perl variables
@@ -37,6 +37,10 @@ requires 'File::chmod';
 
 # HTTP style message
 requires 'HTTP::Message', '>= 6.18';
+
+# Required for SSL connections to web and mail servers
+# Please consider updating to version 2.066 or higher: This version fixes email sending (bug#14357).
+requires 'IO::Socket::SSL';
 
 # A JavaScript minifier written in XS
 requires 'JavaScript::Minifier::XS';
@@ -151,6 +155,9 @@ requires 'Plack::Middleware::ReverseProxy';
     # convenient and informative dumping data structures
     requires 'Data::Dx', '>= 0.000010';
 
+    # command history in Perl debugger and in Dev::Tools::Shell
+    requires 'Term::ReadLine::Gnu', '>= 1.35';
+
 # };
 
 # feature 'devel:encoding', 'Modules for debugging encoding issues' => sub {
@@ -200,40 +207,40 @@ requires 'Plack::Middleware::ReverseProxy';
 
 # feature 'div:cldr', 'Support for feature div:cldr' => sub {
     # localisation from the CLDR project
-    requires 'Locale::CLDR', '== 0.44.1';
+    requires 'Locale::CLDR', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Ar', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Ar', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::De', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::De', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Es', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Es', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Fr', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Fr', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Hu', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Hu', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Ko', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Ko', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Nb', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Nb', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Pt', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Pt', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Ru', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Ru', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Sr', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Sr', '== 0.46.0';
 
     # language packs from the CLDR project
-    requires 'Locale::CLDR::Locales::Zh', '== 0.44.1';
+    requires 'Locale::CLDR::Locales::Zh', '== 0.46.0';
 
 # };
 
@@ -251,9 +258,6 @@ requires 'Plack::Middleware::ReverseProxy';
     requires 'Text::QRCode';
 
 # };
-
-# Feature 'div:ssl' is not needed for Docker
-
 
 # feature 'div:xslt', 'Support for feature div:xslt' => sub {
     # Required for Generic Interface XSLT mapping module.
@@ -297,13 +301,10 @@ requires 'Plack::Middleware::ReverseProxy';
 
 # };
 
-# Feature 'mail:ssl' is not needed for Docker
-
-
 # Feature 'optional' is not needed for Docker
 
 
-# feature 'performance:redis', 'Support for feature performance:redis' => sub {
+# feature 'performance:redis', 'Modules for running with Redis Cache Server' => sub {
     # For usage with Redis Cache Server.
     requires 'Redis';
 

@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2023 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -175,7 +175,7 @@ sub _Add {
     my %GetParam;
 
     # check if we clone from an existing field
-    my $CloneFieldID = $ParamObject->GetParam( Param => "ID" );
+    my $CloneFieldID = $ParamObject->GetParam( Param => "CloneFieldID" );
     if ($CloneFieldID) {
         my $FieldConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
             ID => $CloneFieldID,
@@ -400,6 +400,7 @@ sub _AddAction {
 
     # differentiate only between autocomplete and dropdown
     $FieldConfig{EditFieldMode} = $FieldConfig{EditFieldMode} eq 'AutoComplete' ? 'AutoComplete' : 'Dropdown';
+    $FieldConfig{PossibleNone}  = $FieldConfig{EditFieldMode} eq 'AutoComplete' ? 1              : $FieldConfig{PossibleNone};
 
     # multiselect excludes multivalue
     $FieldConfig{MultiValue} = $FieldConfig{Multiselect} ? 0 : $FieldConfig{MultiValue};
@@ -721,6 +722,7 @@ sub _ChangeAction {
 
     # differentiate only between autocomplete and dropdown
     $FieldConfig{EditFieldMode} = $FieldConfig{EditFieldMode} eq 'AutoComplete' ? 'AutoComplete' : 'Dropdown';
+    $FieldConfig{PossibleNone}  = $FieldConfig{EditFieldMode} eq 'AutoComplete' ? 1              : $FieldConfig{PossibleNone};
 
     # multiselect excludes multivalue
     $FieldConfig{MultiValue} = $FieldConfig{Multiselect} ? 0 : $FieldConfig{MultiValue};

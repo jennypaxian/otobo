@@ -7,7 +7,7 @@
 # Copyright (C) 2007 Aron Ujvari <ujvari@hungary.com>
 # Copyright (C) 2009 Arnold Matyasi <arn@webma.hu>
 # Copyright (C) 2013 Csaba Németh <csaba@sopron.hu>
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -37,7 +37,7 @@ sub Data {
     $Self->{DateFormatShort}     = '%Y-%M-%D';
     $Self->{DateInputFormat}     = '%Y-%M-%D';
     $Self->{DateInputFormatLong} = '%Y-%M-%D - %T';
-    $Self->{Completeness}        = 0.861753227259081;
+    $Self->{Completeness}        = 0.857933303424555;
 
     # csv separator
     $Self->{Separator}         = ';';
@@ -1351,8 +1351,11 @@ sub Data {
         'The full path of the certification authority directory where the CA certificates are stored in the file system.' =>
             'A hitelesítés-szolgáltató könyvtárának teljes elérési útja, ahol a CA tanúsítványok tárolva vannak a fájlrendszeren.',
         'e.g. /opt/otobo/var/certificates/SOAP/CA' => 'például /opt/otobo/var/certificates/SOAP/CA',
-        'SSL hostname verification.' => '',
+        'SSL hostname verification' => '',
         'Abort the request if the hostname cannot be verified. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
+            '',
+        'SSL verify mode' => '',
+        'Abort the request if SSL verification fails. Disabling skips SSL verification entirely. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
             '',
         'Controller mapping for Invoker' => 'Vezérlő leképezés a meghívóhoz',
         'The controller that the invoker should send requests to. Variables marked by a \':\' will get replaced by the data value and passed along with the request. (e.g. /Ticket/:TicketID?UserLogin=:UserLogin&Password=:Password).' =>
@@ -2120,18 +2123,25 @@ sub Data {
         'If nothing is selected, then there are no permissions in this group (tickets will not be available for the role).' =>
             'Ha semmi sincs kiválasztva, akkor ebben a csoportban nincsenek jogosultságok (a jegyek nem lesznek elérhetők a szerepnek).',
         'Toggle %s permission for all' => 'A(z) %s jogosultság ki- vagy bekapcsolása mindenkinek',
+        'Read only access to the ticket in this group/queue. The ticket can be found via a search and its TicketZoom can be accessed. If used for a calendar, users can see and export all appointments in the calendar.' =>
+            '',
         'move_into' => 'átmozgatás',
-        'Permissions to move tickets into this group/queue.' => 'Jogosultságok jegyek áthelyezéséhez ebbe a csoportba/várólistába.',
+        'Permissions to move tickets into this group/queue. If used for a calendar, users can modify appointments in the calendar, but without changing the calendar selection.' =>
+            '',
         'create' => 'létrehozás',
-        'Permissions to create tickets in this group/queue.' => 'Jogosultságok új jegyek létrehozásához ebben a csoportban/várólistában.',
+        'Permissions to create tickets in this group/queue. If used for a calendar, users can create and delete appointments in the calendar.' =>
+            '',
         'note' => 'jegyzet',
-        'Permissions to add notes to tickets in this group/queue.' => 'Jogosultságok a jegyekhez való jegyzetek hozzáadásához ebben a csoportban/várólistában.',
+        'Permissions to add notes to tickets in this group/queue. It also allows agents to be informed via the \'Inform Agents\' section in the Notes.' =>
+            '',
         'owner' => 'tulajdonos',
-        'Permissions to change the owner of tickets in this group/queue.' =>
-            'Jogosultságok a jegyek tulajdonosának megváltoztatásához ebben a csoportban/várólistában.',
+        'Permissions to be become the owner of tickets in this group/queue. One can be selected as an owner while creating a ticket or changing the owner. Being the owner gives full rw permissions to this ticket.' =>
+            '',
         'priority' => 'prioritás',
-        'Permissions to change the ticket priority in this group/queue.' =>
-            'Jogosultságok a jegy prioritásnak megváltoztatásához ebben a csoportban/várólistában.',
+        'Permissions to open the priority action in this group/queue.' =>
+            '',
+        'Full read and write access to the tickets in this group/queue. If used for a calendar, users can manage the calendar itself.' =>
+            '',
 
         # Template: AdminRoleUser
         'Manage Agent-Role Relations' => 'Ügyintéző–Szerep kapcsolatok kezelése',
@@ -2556,6 +2566,13 @@ sub Data {
 
         # Template: AdminUserGroup
         'Manage Agent-Group Relations' => 'Ügyintéző–Csoport kapcsolatok kezelése',
+        'Permissions to move tickets into this group/queue.' => 'Jogosultságok jegyek áthelyezéséhez ebbe a csoportba/várólistába.',
+        'Permissions to create tickets in this group/queue.' => 'Jogosultságok új jegyek létrehozásához ebben a csoportban/várólistában.',
+        'Permissions to add notes to tickets in this group/queue.' => 'Jogosultságok a jegyekhez való jegyzetek hozzáadásához ebben a csoportban/várólistában.',
+        'Permissions to change the owner of tickets in this group/queue.' =>
+            'Jogosultságok a jegyek tulajdonosának megváltoztatásához ebben a csoportban/várólistában.',
+        'Permissions to change the ticket priority in this group/queue.' =>
+            'Jogosultságok a jegy prioritásnak megváltoztatásához ebben a csoportban/várólistában.',
 
         # Template: AgentAppointmentAgendaOverview
         'Agenda Overview' => 'Napirend áttekintő',
@@ -3037,7 +3054,6 @@ sub Data {
 
         # Template: AgentTicketEmail
         'Create New Email Ticket' => 'Új e-mail jegy létrehozása',
-        'Example Template' => 'Példa sablon',
         'To customer user' => 'Ügyfél-felhasználónak',
         'Please include at least one customer user for the ticket.' => 'Vegyen fel legalább egy ügyfél-felhasználót a jegyhez.',
         'Select this customer as the main customer.' => 'Az ügyfél kijelölése fő ügyfélként.',
@@ -4110,6 +4126,9 @@ sub Data {
         'The attribute of the referenced object' => '',
         'Select the attribute dynamic field that references an object' =>
             '',
+        'A field of type %s is currently not usable as lens attribute.' =>
+            '',
+        'Field %s is not a reference field.' => '',
         'Not a valid dynamic field.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScreen.pm
@@ -4121,9 +4140,9 @@ sub Data {
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScript.pm
         'Need valid field driver.' => '',
-        'Bad value in RequiredArgs.' => '',
-        'Bad value in PreviewTriggers.' => '',
-        'Bad value in StorageTriggers.' => '',
+        'Erroneous value in RequiredArgs.' => '',
+        'Erroneous value in PreviewTriggers.' => '',
+        'Erroneous value in StorageTriggers.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldSet.pm
         'Missing Dynamic Field.' => '',
@@ -4281,6 +4300,8 @@ sub Data {
         'Need valid Subaction!' => 'Érvényes alművelet szükséges!',
         'This field should be an integer.' => 'Ez a mező csak egész szám lehet.',
         'File or Directory not found.' => 'Fájl vagy könyvtár nem található.',
+        'This key is already used' => '',
+        'This key is not allowed' => '',
 
         # Perl Module: Kernel/Modules/AdminGenericInterfaceWebservice.pm
         'There is another web service with the same name.' => 'Már létezik egy ugyanilyen nevű webszolgáltatás.',
@@ -5018,6 +5039,9 @@ sub Data {
         'Error: the file could not be deleted properly. Please contact your administrator (missing FileID).' =>
             'Hiba: a fájlt nem sikerült megfelelően törölni. Vegye fel a kapcsolatot a rendszergazdával (hiányzó fájlazonosító).',
 
+        # Perl Module: Kernel/Modules/BasePassword.pm
+        'Can`t remove SessionID.' => 'Nem lehet eltávolítani a munkamenet-azonosítót.',
+
         # Perl Module: Kernel/Modules/CustomerDashboardCommon.pm
         'Registration for tile %s of CustomerDashboard is invalid! Either Module or Template needed.' =>
             '',
@@ -5522,11 +5546,20 @@ sub Data {
         'between' => 'között',
 
         # Perl Module: Kernel/System/DynamicField/Driver/BaseReference.pm
-        'e.g. Text or Te*t' => 'például Szöveg vagy Sz*eg',
         'Referenced object type' => '',
         'Select the type of the referenced object' => '',
         'Input mode of edit field' => '',
         'Select the input mode for the edit field.' => '',
+        'Link type' => '',
+        'Select the link type.' => '',
+        'Forwards: Referencing (Source) -> Referenced (Target)' => '',
+        'Backwards: Referenced (Source) -> Referencing (Target)' => '',
+        'Link Direction' => '',
+        'The referencing object is the one containing this dynamic field, the referenced object is the one selected as value of the dynamic field.' =>
+            '',
+
+        # Perl Module: Kernel/System/DynamicField/Driver/BaseScript.pm
+        'e.g. Text or Te*t' => 'például Szöveg vagy Sz*eg',
 
         # Perl Module: Kernel/System/DynamicField/Driver/Checkbox.pm
         'Ignore this field.' => 'A mező mellőzése.',
@@ -5564,6 +5597,9 @@ sub Data {
 
         # Perl Module: Kernel/System/ImportExport/FormatBackend/JSON.pm
         'Pretty print the exported concatenated JSON' => '',
+
+        # Perl Module: Kernel/System/ImportExport/ObjectBackend/Translations.pm
+        'Empty fields indicate that the current values are kept' => '',
 
         # Perl Module: Kernel/System/MigrateFromOTRS/CloneDB/Backend.pm
         'Sanity checks for database.' => '',
@@ -6173,7 +6209,6 @@ sub Data {
             'Sikertelen bejelentkezés! A megadott felhasználónév vagy jelszó hibás.',
         'Authentication succeeded, but no user data record is found in the database. Please contact the administrator.' =>
             'A hitelesítés sikerült, de nem található felhasználói adatrekord az adatbázisban. Vegye fel a kapcsolatot a rendszergazdával.',
-        'Can`t remove SessionID.' => 'Nem lehet eltávolítani a munkamenet-azonosítót.',
         'Logout successful.' => 'Sikeres kilépés.',
         'Feature not active!' => 'A funkció nem aktív!',
         'Sent password reset instructions. Please check your email.' => 'A jelszó visszaállítási utasítások elküldve. Nézze meg a leveleit.',
@@ -7243,6 +7278,7 @@ Az Ön segélyszolgálat csapata
         'Created ticket [%s] in "%s" with priority "%s" and state "%s".' =>
             'Egy jegy [%s] létrejött a(z) „%s” várólistában „%s” prioritással és „%s” állapottal.',
         'Croatian' => 'Horvát',
+        'Custom CSS styles for RichText articles.' => '',
         'Custom RSS Feed' => 'Egyéni RSS hírforrás',
         'Custom text for the page shown to customers that have no tickets yet (if you need those text translated add them to a custom translation module).' =>
             'Egyéni szöveg arra az oldalra, amely azoknak az ügyfeleknek jelenik meg, akik még nem rendelkeznek jeggyel (ha le szeretné fordítani ezt a szöveget, akkor adja hozzá az egyéni fordítási modulhoz).',
@@ -7460,6 +7496,8 @@ Az Ön segélyszolgálat csapata
             'Meghatározza, hogy engedélyezni kell-e az ügyintézőknek a bejelentkezést, ha nincs megosztott titok eltárolva a beállításaikban, és következésképpen nem használnak kétlépcsős hitelesítést.',
         'Defines if customers should be allowed to login if they have no shared secret stored in their preferences and therefore are not using two-factor authentication.' =>
             'Meghatározza, hogy engedélyezni kell-e az ügyfeleknek a bejelentkezést, ha nincs megosztott titok eltárolva a beállításaikban, és következésképpen nem használnak kétlépcsős hitelesítést.',
+        'Defines if parent-child translations for queues and services should be generated automatically.' =>
+            '',
         'Defines if the communication between this system and the servers that provide cloud services is possible. If set to \'Disable cloud services\', some functionality will be lost such as support data sending, Package Verify™ and product News dashboard widgets, among others.' =>
             '',
         'Defines if the enhanced mode should be used (enables use of table, replace, subscript, superscript, paste from word, etc.) in customer interface.' =>
@@ -7563,8 +7601,6 @@ Az Ön segélyszolgálat csapata
         'Defines the data objects avaliable to be translated.' => '',
         'Defines the date input format used in forms (option or input fields).' =>
             'Meghatározza az űrlapokon használt adatok beviteli formátumát (választás vagy beviteli mező).',
-        'Defines the default CSS for creating CKEditor articles.' => '',
-        'Defines the default CSS used for displaying articles.' => '',
         'Defines the default agent name in the ticket zoom view of the customer interface.' =>
             'Meghatározza az alapértelmezett ügyintézőnevet az ügyfélfelület jegynagyítás nézetén.',
         'Defines the default auto response type of the article for this operation.' =>
@@ -7748,8 +7784,6 @@ Az Ön segélyszolgálat csapata
             'Meghatározza azokat a csoportokat, amelyekbe minden ügyfél be fog kerülni (ha a CustomerGroupSupport engedélyezve van, és nem szeretne minden ügyfelet kezelni ezeknél a csoportoknál).',
         'Defines the headers which will be shown to generic content for the requested key.' =>
             '',
-        'Defines the height for the rich text editor component for this screen. Enter number (pixels) or percent value (relative).' =>
-            'Meghatározza a RichText szerkesztő komponens magasságát ennél a képernyőnél. Szám (képpont) vagy százalék (relatív) értéket adjon meg.',
         'Defines the height for the rich text editor component. Enter number (pixels) or percent value (relative).' =>
             'Meghatározza a RichText szerkesztő komponens magasságát. Szám (képpont) vagy százalék (relatív) értéket adjon meg.',
         'Defines the history comment for the close ticket screen action, which gets used for ticket history in the agent interface.' =>
@@ -7807,6 +7841,8 @@ Az Ön segélyszolgálat csapata
         'Defines the hours and week days of the indicated calendar, to count the working time.' =>
             'Meghatározza a jelzett naptár óráit és hétköznapjait a munkaidő számításához.',
         'Defines the hours and week days to count the working time.' => 'Meghatározza az órákat és a hétköznapokat a munkaidő számításához.',
+        'Defines the initial height in pixels for the rich text editor component for this screen.' =>
+            '',
         'Defines the key to be checked with Kernel::Modules::AgentInfo module. If this user preferences key is true, the message is accepted by the system.' =>
             'Meghatározza a Kernel::Modules::AgentInfo modullal ellenőrzendő kulcsot. Ha ez a felhasználói beállítás kulcs igaz, az üzenetet elfogadta a rendszer.',
         'Defines the key to check with CustomerAccept. If this user preferences key is true, then the message is accepted by the system.' =>
@@ -8550,6 +8586,8 @@ Az Ön segélyszolgálat csapata
             'Ha az „SMTP” mechanizmusok bármelyike SendmailModule modulként lett kiválasztva, akkor meg kell adni azt a levelező kiszolgálót, amely kiküldi a leveleket.',
         'If any of the "SMTP" mechanisms was selected as SendmailModule, the port where your mailserver is listening for incoming connections must be specified.' =>
             'Ha az „SMTP” mechanizmusok bármelyike SendmailModule modulként lett kiválasztva, akkor meg kell adni azt a portot, ahol a levelező kiszolgáló a bejövő kapcsolatokat figyeli.',
+        'If any of the "SSL" mechanisms was selected as SendmailModule than declare whether the mail server should be verified.' =>
+            '',
         'If enabled debugging information for ACLs is logged.' => 'Ha engedélyezve van, akkor az ACL-ek hibakeresési információi naplózva lesznek.',
         'If enabled debugging information for transitions is logged.' => 'Ha engedélyezve van, akkor az átmenetek hibakeresési információi naplózva lesznek.',
         'If enabled defines the preselected state for customer follow-up in the customer interface.' =>
@@ -8981,6 +9019,10 @@ Az Ön segélyszolgálat csapata
         'ParentChild' => 'Szülő-gyermek',
         'Path for the log file (it only applies if "FS" was selected for LoopProtectionModule and it is mandatory).' =>
             'A naplófájl útvonala (csak akkor alkalmazza, ha „FS” lett kiválasztva a LoopProtectionModule modulnál, és nem kötelező).',
+        'Path to CKEditor content CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
+        'Path to CKEditor editor CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
         'Pending time' => 'Várakozási idő',
         'People' => 'Emberek',
         'Performs the configured action for each event (as an Invoker) for each configured web service.' =>
@@ -9131,6 +9173,8 @@ Az Ön segélyszolgálat csapata
         'Russian' => 'Orosz',
         'S/MIME Certificates' => 'S/MIME tanúsítványok',
         'SLAs' => '',
+        'SSL_VERIFY_NONE - no verification of mail server host' => '',
+        'SSL_VERIFY_PEER - verify the mail server host' => '',
         'Salutations' => 'Megszólítások',
         'Sample command output' => 'Minta parancskimenet',
         'Saves the attachments of articles. "DB" stores all data in the database (not recommended for storing big attachments). "FS" stores the data on the filesystem; this is faster but the webserver should run under the OTOBO user. You can switch between the modules even on a system that is already in production without any loss of data. Note: Searching for attachment names is not supported when "FS" is used. "S3" is experimental.' =>
@@ -9795,8 +9839,8 @@ Az Ön segélyszolgálat csapata
         'This option defines the process tickets default state.' => 'Ez a beállítás határozza meg a folyamatjegyek alapértelmezett állapotát.',
         'This option sets additional quick date buttons to pending dates. For ordering purposes one hash entry per array segment has to be set. The key is the button name, value is the value, where a single number n sets the date to n days from now, +n adds n days to the currently set date, and -n subtracts them.' =>
             '',
-        'This option will deny the access to customer company tickets, which are not created by the customer user.' =>
-            'Ez a beállítás meg fogja tagadni azon ügyfél-vállalati jegyekhez való hozzáférést, amelyeket nem az ügyfél-felhasználó hozott létre.',
+        'This option will deny the access to customer company tickets, which are not created by the customer user. Please also deactivate "CustomerFrontend::Navigation###CustomerTicketOverview###002-Ticket" so that the button is no longer visible.' =>
+            '',
         'This setting allows you to override the built-in country list with your own list of countries. This is particularly handy if you just want to use a small select group of countries.' =>
             'Ez a beállítás lehetővé teszi a beépített országlista felülbírálását a saját országlistájával. Ez különösen hasznos, ha az országoknak csak egy kiválasztott kis csoportját szeretné használni.',
         'This setting is deprecated. Set OTOBOTimeZone instead.' => 'Ez a beállítás elavult. Állítsa be az OTOBOTimeZone beállítást helyette.',
@@ -9854,8 +9898,8 @@ Az Ön segélyszolgálat csapata
             '',
         'Tile registration for the CustomerDashboard. Module is required. Optionally, an order for items can be set. The order must have the name of the item as key and the desired position as integer value.' =>
             '',
-        'Time in seconds that gets added to the actual time if setting a pending-state (default: 86400 = 1 day).' =>
-            'Az idő másodpercben, amely hozzáadódik az aktuális időhöz, ha egy várakozó állapot be van állítva (alapértelmezett: 86400 = 1 nap).',
+        'Time in seconds that gets added to the actual time if setting a pending-state. Examples: 86400 = 1 day or 604800 = 1 week.' =>
+            '',
         'To accept login information, such as an EULA or license.' => 'Bejelentkezési információk elfogadásához, mint például EULA vagy licenc.',
         'To download attachments.' => 'Mellékletek letöltéséhez.',
         'To view HTML attachments.' => 'HTML mellékletek megtekintéséhez.',
@@ -9910,6 +9954,8 @@ Az Ön segélyszolgálat csapata
         'Uses richtext for viewing and editing ticket notification.' => 'RichText szöveget használ a jegyértesítések megtekintésénél és szerkesztésénél.',
         'Uses richtext for viewing and editing: articles, salutations, signatures, standard templates, auto responses and notifications.' =>
             'RichText szöveget használ a megtekintésnél és szerkesztésnél: bejegyzések, megszólítások, aláírások, szabványos sablonok, automatikus válaszok és értesítések.',
+        'Verify mailserver when securely fetching mails from POP3S/POP3TLS/IMAPS/IMAPTLS mail accounts.' =>
+            '',
         'Vietnam' => 'Vietnami',
         'View performance benchmark results.' => 'Teljesítményteszt eredményeinek megtekintése.',
         'View stored article version.' => '',

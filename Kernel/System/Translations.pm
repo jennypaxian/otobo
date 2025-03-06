@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2019 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -31,12 +31,14 @@ use Kernel::System::ModuleRefresh ();
 our @ObjectDependencies = (
     'Kernel::Config',
     'Kernel::System::DateTime',
-    'Kernel::System::DynamicField::Backend',
-    'Kernel::System::Encode',
-    'Kernel::System::Main',
-    'Kernel::System::Log',
     'Kernel::System::DB',
     'Kernel::System::DynamicField',
+    'Kernel::System::DynamicField::Backend',
+    'Kernel::System::Encode',
+    'Kernel::System::Log',
+    'Kernel::System::Main',
+    'Kernel::System::Queue',
+    'Kernel::System::Service',
 );
 
 =head1 NAME
@@ -75,12 +77,12 @@ sub new {
 add translation items
 
     my $Success = $TranslationsObject->DraftTranslationsAdd(
-        Language     => 'en',
-        Content      => 'Red',
-        Translation  => 'Rojo',
-        UserID       => 1,
-        Edit         => 0,
-        ImportParam  => (1|0),
+        Language    => 'en',
+        Content     => 'Red',
+        Translation => 'Rojo',
+        UserID      => 1,
+        Edit        => 0,
+        Import      => (1|0),
     );
 
 Returns:
@@ -103,14 +105,14 @@ sub DraftTranslationsAdd {
         }
     }
 
-    $Param{Edit}        ||= '';
-    $Param{ImportParam} ||= 0;
+    $Param{Edit}   ||= '';
+    $Param{Import} ||= 0;
     my $Flag = $Param{Edit} ? 'e' : 'n';
 
     my $Success = $Kernel::OM->Get('Kernel::System::DB')->Do(
         SQL =>
             "INSERT INTO translation_item (language, content, translation, flag, create_by, create_time, change_by, change_time, import_param) VALUES (?, ?, ?, ?, ?, current_timestamp, ?, current_timestamp, ?)",
-        Bind => [ \$Param{Language}, \$Param{Content}, \$Param{Translation}, \$Flag, \$Param{UserID}, \$Param{UserID}, \$Param{ImportParam} ]
+        Bind => [ \$Param{Language}, \$Param{Content}, \$Param{Translation}, \$Flag, \$Param{UserID}, \$Param{UserID}, \$Param{Import} ]
     );
 
     return $Success;
@@ -163,23 +165,23 @@ get all draft translation items
     my $DraftTranslations = $TranslationsObject->DraftTranslationsGet(
         Language => 'en',
         Active   => 1, #1: Active, #0: Draft
-        ImportParam => (0|1),
+        Import   => (0|1),
     );
 
 Returns:
 
     $DraftTranslations = [
         {
-            ID               => 32,
-            Language         => 'en',
-            Content          => 'Earth',
-            Translation      => 'Tierra',
-            Flag             => 'n', #n: New, #d: Marked for deletion, #e: Editing
-            CreateBy         => 1,
-            CreateTime       => '2023-01-01 07:00:00',
-            ChangeBy         => 1,
-            ChangeTime       => '2023-01-01 07:00:00',
-            ImportParam      => 1,
+            ID          => 32,
+            Language    => 'en',
+            Content     => 'Earth',
+            Translation => 'Tierra',
+            Flag        => 'n', #n: New, #d: Marked for deletion, #e: Editing
+            CreateBy    => 1,
+            CreateTime  => '2023-01-01 07:00:00',
+            ChangeBy    => 1,
+            ChangeTime  => '2023-01-01 07:00:00',
+            Import      => 1,
         },
         ...
     ]
@@ -201,14 +203,14 @@ sub DraftTranslationsGet {
     my $DBObject = $Kernel::OM->Get('Kernel::System::DB');
     my @DraftItems;
 
-    $Param{ImportParam} ||= 0;
+    $Param{Import} ||= 0;
     my $Flag = $Param{Active} ? "'a'" : "'n','e','d'";
 
     return \@DraftItems
         if !$DBObject->Prepare(
             SQL =>
             "SELECT id, language, content, translation, flag, create_by, create_time, change_by, change_time FROM translation_item WHERE language = ? and import_param = ? and flag in($Flag) ORDER BY flag, content ASC",
-            Bind => [ \$Param{Language}, \$Param{ImportParam} ]
+            Bind => [ \$Param{Language}, \$Param{Import} ]
         );
 
     while ( my @Row = $DBObject->FetchrowArray() ) {
@@ -593,9 +595,10 @@ sub ReadExistingTranslationFile {
 write translation file
 
     my $Success = $TranslationsObject->WriteTranslationFile(
-        UserLanguage => 'en',
-        Data         => { .. } #Hash of Content/Translation values,
-        ImportParam  => (0|1),
+        UserLanguage  => 'en',
+        Data          => { .. }     # Hash of Content/Translation values,
+        Import        => (0|1),
+        NoParentChild => (0|1),     # if automatic translation of parent-child strings should be performed. Default is 0
     );
 
 Returns:
@@ -620,14 +623,15 @@ sub WriteTranslationFile {
     my $Data                = '';
     my $BreakLineAfterChars = 60;
     my $Home                = $Kernel::OM->Get('Kernel::Config')->Get('Home');
-    $Param{ImportParam} ||= 0;
+    $Param{Import}        ||= 0;
+    $Param{NoParentChild} ||= 0;
 
     #Check if there are draft translations to write
     my @DraftTranslations = @{
         $Self->DraftTranslationsGet(
-            Language    => $Param{UserLanguage},
-            ImportParam => $Param{ImportParam},
-            Active      => 0
+            Language => $Param{UserLanguage},
+            Import   => $Param{Import},
+            Active   => 0
         )
     };
 
@@ -647,9 +651,9 @@ sub WriteTranslationFile {
 
     my @LanguageData = @{
         $Self->DraftTranslationsGet(
-            Language    => $Param{UserLanguage},
-            ImportParam => 0,
-            Active      => 1
+            Language => $Param{UserLanguage},
+            Import   => 0,
+            Active   => 1
         )
     };
 
@@ -850,6 +854,25 @@ EOF
         $Success = 1;
     }
 
+    if ( !$Param{NoParentChild} ) {
+
+        my %Queues  = $Kernel::OM->Get('Kernel::System::Queue')->QueueList();
+        my @Strings = values %Queues;
+
+        if ( $Kernel::OM->Get('Kernel::Config')->Get('Ticket::Service') ) {
+
+            my %Services = $Kernel::OM->Get('Kernel::System::Service')->ServiceList(
+                UserID => 1,
+            );
+            push @Strings, values %Services;
+        }
+
+        $Self->TranslateParentChildElements(
+            LanguageID => $Param{UserLanguage},
+            Strings    => \@Strings,
+        );
+    }
+
     return $Success;
 }
 
@@ -907,6 +930,98 @@ sub GetTranslationUniqueValues {
 
     return \%UniqueValues;
 
+}
+
+=head2 TranslateParentChildElements()
+
+generate chained translations automatically based on translations of single elements
+
+    my $Success = $TranslationsObject->TranslateParentChildElements(
+        LanguageID => 'en',         # optional, defaults to all languages
+        Strings    => [
+            'Test1',
+            'Test1::Test2',
+        ],
+    );
+
+=cut
+
+sub TranslateParentChildElements {
+    my ( $Self, %Param ) = @_;
+
+    return 1 unless $Kernel::OM->Get('Kernel::Config')->Get('Translations::TranslateParentChild');
+
+    # check needed parameters
+    for my $Needed (qw(Strings)) {
+        if ( !$Param{$Needed} ) {
+            $Kernel::OM->Get('Kernel::System::Log')->Log(
+                Priority => 'error',
+                Message  => "Need $Needed!",
+            );
+            return;
+        }
+    }
+
+    # use given language, else use all system languages
+    my @Languages = $Param{LanguageID} ? ( $Param{LanguageID} ) : ( keys %{ $Kernel::OM->Get('Kernel::Config')->Get('DefaultUsedLanguages') } );
+
+    # iterate over languages
+    for my $LanguageID (@Languages) {
+
+        # create local language object
+        my $LocalLanguageObject = $Kernel::OM->Create(
+            'Kernel::Language',
+            ObjectParams => {
+                UserLanguage => $LanguageID,
+            },
+        );
+        my $DeployLanguage = 0;
+
+        STRING:
+        for my $String ( $Param{Strings}->@* ) {
+
+            # split chained strings into individual elements
+            my @NameElements = split /::/, $String;
+            my @TranslatedElements;
+            for my $NameElement (@NameElements) {
+
+                # translate individual elements
+                push @TranslatedElements, $LocalLanguageObject->Translate($NameElement);
+            }
+            my $TranslatedString = join( '::', @TranslatedElements );
+
+            # check if translation has changed to prevent recursive deployment
+            if ( $TranslatedString ne $LocalLanguageObject->Translate($String) ) {
+
+                my $Success = $Self->DraftTranslationsAdd(
+                    Language    => $LanguageID,
+                    Content     => $String,
+                    Translation => $TranslatedString,
+                    UserID      => 1,
+                    Edit        => 1,
+                );
+                if ( !$Success ) {
+                    $Kernel::OM->Get('Kernel::System::Log')->Log(
+                        Priority => 'error',
+                        Message  => "Not able to add translation for string $String in language $Param{LanguageID}!",
+                    );
+                    next STRING;
+                }
+                $DeployLanguage = 1;
+            }
+        }
+
+        # check if language need to be deployed to prevent recursive deployment
+        if ($DeployLanguage) {
+            my $DeploySuccess = $Self->WriteTranslationFile(
+                UserLanguage  => $LanguageID,
+                NoParentChild => 1,
+            );
+        }
+
+    }
+
+    return 1;
 }
 
 1;

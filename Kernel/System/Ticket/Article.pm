@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -644,6 +644,30 @@ sub ArticleAccountedTimeGet {
         $AccountedTime += $TimeUnit;
     }
 
+    return $AccountedTime if $AccountedTime;
+
+    # article not found in time_accounting table, check if it is deleted and sum former times
+    return if !$DBObject->Prepare(
+        SQL   => 'SELECT id FROM article_version WHERE source_article_id = ? AND article_delete = 1 ORDER BY id DESC',
+        Bind  => [ \$Param{ArticleID} ],
+        Limit => 1,
+    );
+
+    if ( my ($DeletedArticleID) = $DBObject->FetchrowArray ) {
+
+        # db query
+        return if !$DBObject->Prepare(
+            SQL  => 'SELECT time_unit FROM time_accounting_version WHERE article_id = ?',
+            Bind => [ \$DeletedArticleID ],
+        );
+
+        # Sum the result rows, even if usually there is only one row.
+        while ( my ($TimeUnit) = $DBObject->FetchrowArray ) {
+            $TimeUnit =~ s/,/./g;
+            $AccountedTime += $TimeUnit;
+        }
+    }
+
     return $AccountedTime;
 }
 
@@ -1250,7 +1274,7 @@ sub _MetaArticleList {
                         av.create_by, av.create_time, av.change_by, av.change_time, av.article_delete
                         FROM article_version av WHERE av.ticket_id = ? AND av.article_delete = 1
                     ) at
-                    ORDER BY at.create_time ASC, at.id DESC",
+                    ORDER BY at.create_time ASC, at.id ASC",
             Bind => [ \$Param{TicketID}, \$Param{TicketID} ],
         );
     }

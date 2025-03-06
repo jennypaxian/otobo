@@ -13,7 +13,7 @@
 # Copyright (C) 2013 Alexey Gluhov <glalexnn at yandex.ru>
 # Copyright (C) 2013 Andrey N. Burdin <BurdinAN at it-sakh.net>
 # Copyright (C) 2013 Yuriy Kolesnikov <ynkolesnikov at gmail.com>
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -43,7 +43,7 @@ sub Data {
     $Self->{DateFormatShort}     = '%D.%M.%Y';
     $Self->{DateInputFormat}     = '%D.%M.%Y';
     $Self->{DateInputFormatLong} = '%D.%M.%Y - %T';
-    $Self->{Completeness}        = 0.828129690783548;
+    $Self->{Completeness}        = 0.824435471810977;
 
     # csv separator
     $Self->{Separator}         = ';';
@@ -1357,9 +1357,12 @@ sub Data {
         'The full path of the certification authority directory where the CA certificates are stored in the file system.' =>
             'Полный путь к каталогу certification authority, в котором хранятся CA certificates. ',
         'e.g. /opt/otobo/var/certificates/SOAP/CA' => 'например, /opt/otobo/var/certificates/SOAP/CA',
-        'SSL hostname verification.' => 'Проверка имени хоста SSL.',
+        'SSL hostname verification' => 'Проверка имени хоста SSL',
         'Abort the request if the hostname cannot be verified. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
             'Прервать запрос, если имя хоста не может быть проверено. Отключать с осторожностью! Пропуск проверки - это риск для безопасности! В основном для тестирования в случае самоподписанных SSL-сертификатов или если вы знаете, что делаете.',
+        'SSL verify mode' => '',
+        'Abort the request if SSL verification fails. Disabling skips SSL verification entirely. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
+            '',
         'Controller mapping for Invoker' => 'Controller mapping для Invoker',
         'The controller that the invoker should send requests to. Variables marked by a \':\' will get replaced by the data value and passed along with the request. (e.g. /Ticket/:TicketID?UserLogin=:UserLogin&Password=:Password).' =>
             'Контроллер, на который invoker должен отправлять запросы. Переменные, помеченные \':\', будут заменены значением и переданы вместе с запросом. (например, /Ticket/:TicketID?UserLogin=:UserLogin&Password=:Password).',
@@ -2126,18 +2129,25 @@ sub Data {
         'If nothing is selected, then there are no permissions in this group (tickets will not be available for the role).' =>
             'Если ничего не выбрано, тогда в этой группе нет прав (для этой роли заявки не будут доступны).',
         'Toggle %s permission for all' => 'Переключить разрешение «%s» для всех',
+        'Read only access to the ticket in this group/queue. The ticket can be found via a search and its TicketZoom can be accessed. If used for a calendar, users can see and export all appointments in the calendar.' =>
+            '',
         'move_into' => 'переместить',
-        'Permissions to move tickets into this group/queue.' => 'Права на перемещение заявок в эту группу/очередь.',
+        'Permissions to move tickets into this group/queue. If used for a calendar, users can modify appointments in the calendar, but without changing the calendar selection.' =>
+            '',
         'create' => 'создание',
-        'Permissions to create tickets in this group/queue.' => 'Права на создание заявок в этой группе/очереди',
+        'Permissions to create tickets in this group/queue. If used for a calendar, users can create and delete appointments in the calendar.' =>
+            '',
         'note' => 'заметка',
-        'Permissions to add notes to tickets in this group/queue.' => 'Права на добавление заметок в заявки в этой группе/очереди.',
+        'Permissions to add notes to tickets in this group/queue. It also allows agents to be informed via the \'Inform Agents\' section in the Notes.' =>
+            '',
         'owner' => 'владелец',
-        'Permissions to change the owner of tickets in this group/queue.' =>
-            'Права на смену владельца заявок в этой группе/очереди.',
+        'Permissions to be become the owner of tickets in this group/queue. One can be selected as an owner while creating a ticket or changing the owner. Being the owner gives full rw permissions to this ticket.' =>
+            '',
         'priority' => 'приоритет',
-        'Permissions to change the ticket priority in this group/queue.' =>
-            'Права на смену приоритета заявок в этой группе/очереди',
+        'Permissions to open the priority action in this group/queue.' =>
+            '',
+        'Full read and write access to the tickets in this group/queue. If used for a calendar, users can manage the calendar itself.' =>
+            '',
 
         # Template: AdminRoleUser
         'Manage Agent-Role Relations' => 'Связь агентов с ролями',
@@ -2562,6 +2572,13 @@ sub Data {
 
         # Template: AdminUserGroup
         'Manage Agent-Group Relations' => 'Связь агентов с группами',
+        'Permissions to move tickets into this group/queue.' => 'Права на перемещение заявок в эту группу/очередь.',
+        'Permissions to create tickets in this group/queue.' => 'Права на создание заявок в этой группе/очереди',
+        'Permissions to add notes to tickets in this group/queue.' => 'Права на добавление заметок в заявки в этой группе/очереди.',
+        'Permissions to change the owner of tickets in this group/queue.' =>
+            'Права на смену владельца заявок в этой группе/очереди.',
+        'Permissions to change the ticket priority in this group/queue.' =>
+            'Права на смену приоритета заявок в этой группе/очереди',
 
         # Template: AgentAppointmentAgendaOverview
         'Agenda Overview' => 'Обзор повестки дня',
@@ -3043,7 +3060,6 @@ sub Data {
 
         # Template: AgentTicketEmail
         'Create New Email Ticket' => 'Создать заявку по email',
-        'Example Template' => 'Пример шаблона',
         'To customer user' => 'Клиенту',
         'Please include at least one customer user for the ticket.' => 'Укажите, пожалуйста, хотя бы одного клиента',
         'Select this customer as the main customer.' => 'Выбрать этого клиента главным клиентом',
@@ -4116,6 +4132,9 @@ sub Data {
         'The attribute of the referenced object' => '',
         'Select the attribute dynamic field that references an object' =>
             '',
+        'A field of type %s is currently not usable as lens attribute.' =>
+            '',
+        'Field %s is not a reference field.' => '',
         'Not a valid dynamic field.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScreen.pm
@@ -4127,9 +4146,9 @@ sub Data {
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScript.pm
         'Need valid field driver.' => '',
-        'Bad value in RequiredArgs.' => '',
-        'Bad value in PreviewTriggers.' => '',
-        'Bad value in StorageTriggers.' => '',
+        'Erroneous value in RequiredArgs.' => '',
+        'Erroneous value in PreviewTriggers.' => '',
+        'Erroneous value in StorageTriggers.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldSet.pm
         'Missing Dynamic Field.' => '',
@@ -4287,6 +4306,8 @@ sub Data {
         'Need valid Subaction!' => 'Требуется правильный Subaction!',
         'This field should be an integer.' => 'Это поле должно быть целым числом.',
         'File or Directory not found.' => 'Файл или каталог не найден.',
+        'This key is already used' => '',
+        'This key is not allowed' => '',
 
         # Perl Module: Kernel/Modules/AdminGenericInterfaceWebservice.pm
         'There is another web service with the same name.' => 'Существует другой веб-сервис с таким же именем.',
@@ -5024,6 +5045,9 @@ sub Data {
         'Error: the file could not be deleted properly. Please contact your administrator (missing FileID).' =>
             'Ошибка: файл не может быть корректно удален. Обратитесь к администратору (пропущен FileID).',
 
+        # Perl Module: Kernel/Modules/BasePassword.pm
+        'Can`t remove SessionID.' => 'Невозможно удалить SessionID.',
+
         # Perl Module: Kernel/Modules/CustomerDashboardCommon.pm
         'Registration for tile %s of CustomerDashboard is invalid! Either Module or Template needed.' =>
             '',
@@ -5528,11 +5552,20 @@ sub Data {
         'between' => 'между',
 
         # Perl Module: Kernel/System/DynamicField/Driver/BaseReference.pm
-        'e.g. Text or Te*t' => 'например Text или Te*t',
         'Referenced object type' => '',
         'Select the type of the referenced object' => '',
         'Input mode of edit field' => '',
         'Select the input mode for the edit field.' => '',
+        'Link type' => '',
+        'Select the link type.' => '',
+        'Forwards: Referencing (Source) -> Referenced (Target)' => '',
+        'Backwards: Referenced (Source) -> Referencing (Target)' => '',
+        'Link Direction' => '',
+        'The referencing object is the one containing this dynamic field, the referenced object is the one selected as value of the dynamic field.' =>
+            '',
+
+        # Perl Module: Kernel/System/DynamicField/Driver/BaseScript.pm
+        'e.g. Text or Te*t' => 'например Text или Te*t',
 
         # Perl Module: Kernel/System/DynamicField/Driver/Checkbox.pm
         'Ignore this field.' => 'Игнорировать это поле.',
@@ -5570,6 +5603,9 @@ sub Data {
 
         # Perl Module: Kernel/System/ImportExport/FormatBackend/JSON.pm
         'Pretty print the exported concatenated JSON' => '',
+
+        # Perl Module: Kernel/System/ImportExport/ObjectBackend/Translations.pm
+        'Empty fields indicate that the current values are kept' => '',
 
         # Perl Module: Kernel/System/MigrateFromOTRS/CloneDB/Backend.pm
         'Sanity checks for database.' => '',
@@ -6179,7 +6215,6 @@ sub Data {
             'Ошибка входа! Указано неправильное имя или пароль.',
         'Authentication succeeded, but no user data record is found in the database. Please contact the administrator.' =>
             'Аутентификация успешна, однако ни одной записи для клиента не обнаружено в используемой/ых базе клиентов. Обратитесь к вашему администратору.',
-        'Can`t remove SessionID.' => 'Невозможно удалить SessionID.',
         'Logout successful.' => 'Успешный выход.',
         'Feature not active!' => 'Функция не активирована!',
         'Sent password reset instructions. Please check your email.' => 'Отправлены инструкции по сбросу пароля. Проверьте свою почту.',
@@ -7249,6 +7284,7 @@ Thanks for your help!
         'Created ticket [%s] in "%s" with priority "%s" and state "%s".' =>
             'Создана заявка [%s] в "%s" с приоритетом "%s" и состоянием "%s".',
         'Croatian' => 'Хорватский',
+        'Custom CSS styles for RichText articles.' => '',
         'Custom RSS Feed' => 'Пользовательская лента RSS ',
         'Custom text for the page shown to customers that have no tickets yet (if you need those text translated add them to a custom translation module).' =>
             'Текст отображаемый клиенту еще не имеющему заявок (если желаете, чтобы этот текст отображался на нужном языке, добавьте его в кастомный русский файл локализации - ru_custom.pm).',
@@ -7466,6 +7502,8 @@ Thanks for your help!
             'Задает возможность входа для агента, если для него не задан секретный ключ хранимый в его личных настройках, т.е. не используется двух-факторная аутентификация.',
         'Defines if customers should be allowed to login if they have no shared secret stored in their preferences and therefore are not using two-factor authentication.' =>
             'Задает возможность входа для клиента, если для него не задан секретный ключ хранимый в его личных настройках, т.е. не используется двух-факторная аутентификация.',
+        'Defines if parent-child translations for queues and services should be generated automatically.' =>
+            '',
         'Defines if the communication between this system and the servers that provide cloud services is possible. If set to \'Disable cloud services\', some functionality will be lost such as support data sending, Package Verify™ and product News dashboard widgets, among others.' =>
             '',
         'Defines if the enhanced mode should be used (enables use of table, replace, subscript, superscript, paste from word, etc.) in customer interface.' =>
@@ -7569,8 +7607,6 @@ Thanks for your help!
         'Defines the data objects avaliable to be translated.' => '',
         'Defines the date input format used in forms (option or input fields).' =>
             'Задает способ ввода даты (выбором (option) или прямым вводом в поле (input).',
-        'Defines the default CSS for creating CKEditor articles.' => '',
-        'Defines the default CSS used for displaying articles.' => '',
         'Defines the default agent name in the ticket zoom view of the customer interface.' =>
             '',
         'Defines the default auto response type of the article for this operation.' =>
@@ -7754,8 +7790,6 @@ Thanks for your help!
             'Задает список групп, в которые включаются все клиенты/компании (если CustomerGroupSupport включена и вы не желаете делать это для каждого клиента/компании по отдельности).',
         'Defines the headers which will be shown to generic content for the requested key.' =>
             '',
-        'Defines the height for the rich text editor component for this screen. Enter number (pixels) or percent value (relative).' =>
-            'Задает высоту окна текстового редактора на этом экране. Введите число пикселей и значение в процентах.',
         'Defines the height for the rich text editor component. Enter number (pixels) or percent value (relative).' =>
             'Задает высоту окна текстового редактора. Введите число пикселей и значение в процентах.',
         'Defines the history comment for the close ticket screen action, which gets used for ticket history in the agent interface.' =>
@@ -7813,6 +7847,8 @@ Thanks for your help!
         'Defines the hours and week days of the indicated calendar, to count the working time.' =>
             'Задает часы и дни недели в выбранном календаре для подсчета рабочего времени',
         'Defines the hours and week days to count the working time.' => 'Задает часы и дни недели для подсчета рабочего времени',
+        'Defines the initial height in pixels for the rich text editor component for this screen.' =>
+            '',
         'Defines the key to be checked with Kernel::Modules::AgentInfo module. If this user preferences key is true, the message is accepted by the system.' =>
             'Задает ключ, который проверяется модулем Kernel::Modules::AgentInfo. Если этот ключ личных настроек верен, сообщение принимается системой.',
         'Defines the key to check with CustomerAccept. If this user preferences key is true, then the message is accepted by the system.' =>
@@ -8556,6 +8592,8 @@ Thanks for your help!
             'Если любой из "SMTP" механизмов был выбран для SendmailModule, mailhost, который отправляет почту, должен быть задан',
         'If any of the "SMTP" mechanisms was selected as SendmailModule, the port where your mailserver is listening for incoming connections must be specified.' =>
             'Если любой из "SMTP" механизмов был выбран для SendmailModule, порт, на котором, почтовый серевер проверяет входящие соединения, должен быть задан.',
+        'If any of the "SSL" mechanisms was selected as SendmailModule than declare whether the mail server should be verified.' =>
+            '',
         'If enabled debugging information for ACLs is logged.' => 'Включить журналирование отладки ACL.',
         'If enabled debugging information for transitions is logged.' => 'Включить журналирование отладки Переходов.',
         'If enabled defines the preselected state for customer follow-up in the customer interface.' =>
@@ -8987,6 +9025,10 @@ Thanks for your help!
         'ParentChild' => 'Телефонный звонок.',
         'Path for the log file (it only applies if "FS" was selected for LoopProtectionModule and it is mandatory).' =>
             'Путь к лог файлу (применяется только если выбран атрибут "FS" для LoopProtectionModule и он обязателен).',
+        'Path to CKEditor content CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
+        'Path to CKEditor editor CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
         'Pending time' => 'Время в ожидании',
         'People' => 'Агенты',
         'Performs the configured action for each event (as an Invoker) for each configured web service.' =>
@@ -9137,6 +9179,8 @@ Thanks for your help!
         'Russian' => 'Русский',
         'S/MIME Certificates' => 'Сертификаты S/MIME',
         'SLAs' => '',
+        'SSL_VERIFY_NONE - no verification of mail server host' => '',
+        'SSL_VERIFY_PEER - verify the mail server host' => '',
         'Salutations' => 'Приветствия',
         'Sample command output' => 'Простейший пример результата выполнения',
         'Saves the attachments of articles. "DB" stores all data in the database (not recommended for storing big attachments). "FS" stores the data on the filesystem; this is faster but the webserver should run under the OTOBO user. You can switch between the modules even on a system that is already in production without any loss of data. Note: Searching for attachment names is not supported when "FS" is used. "S3" is experimental.' =>
@@ -9801,8 +9845,8 @@ Thanks for your help!
         'This option defines the process tickets default state.' => 'Задает состояние по умолчанию для процессной заявки.',
         'This option sets additional quick date buttons to pending dates. For ordering purposes one hash entry per array segment has to be set. The key is the button name, value is the value, where a single number n sets the date to n days from now, +n adds n days to the currently set date, and -n subtracts them.' =>
             '',
-        'This option will deny the access to customer company tickets, which are not created by the customer user.' =>
-            'Этот параметр запрещает доступ к заявкам Компании клиента, которые не созданы этим клиентом.',
+        'This option will deny the access to customer company tickets, which are not created by the customer user. Please also deactivate "CustomerFrontend::Navigation###CustomerTicketOverview###002-Ticket" so that the button is no longer visible.' =>
+            '',
         'This setting allows you to override the built-in country list with your own list of countries. This is particularly handy if you just want to use a small select group of countries.' =>
             'Позволяет переопределить встроенный список стран своим списком. Это позволит сократить отображаемый список до необходимого минимума.',
         'This setting is deprecated. Set OTOBOTimeZone instead.' => 'Этот параметр устарел. Вместо него используйте OTOBOTimeZone.',
@@ -9860,8 +9904,8 @@ Thanks for your help!
             '',
         'Tile registration for the CustomerDashboard. Module is required. Optionally, an order for items can be set. The order must have the name of the item as key and the desired position as integer value.' =>
             '',
-        'Time in seconds that gets added to the actual time if setting a pending-state (default: 86400 = 1 day).' =>
-            'Время (в сек) добавляемое к текущему, если установлено состояние ожидания. (по умолчанию: 86400 = 1 день).',
+        'Time in seconds that gets added to the actual time if setting a pending-state. Examples: 86400 = 1 day or 604800 = 1 week.' =>
+            '',
         'To accept login information, such as an EULA or license.' => 'Принять регистрационную информацию, такую как EULA или лицензию.',
         'To download attachments.' => 'Для загрузки вложение.',
         'To view HTML attachments.' => 'Для просмотра HTML вложений.',
@@ -9916,6 +9960,8 @@ Thanks for your help!
         'Uses richtext for viewing and editing ticket notification.' => 'Использует форматированный текст для просмотра и редактирования уведомлений о заявках.',
         'Uses richtext for viewing and editing: articles, salutations, signatures, standard templates, auto responses and notifications.' =>
             'Использует форматированный текст для просмотра и редактирования: сообщений, приветствий, подписей, стандартных шаблонов, автоответов и уведомлений.',
+        'Verify mailserver when securely fetching mails from POP3S/POP3TLS/IMAPS/IMAPTLS mail accounts.' =>
+            '',
         'Vietnam' => 'Вьетнамский',
         'View performance benchmark results.' => 'Просмотр результатов измерения производительности.',
         'View stored article version.' => '',

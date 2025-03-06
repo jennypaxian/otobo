@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -538,7 +538,7 @@ sub LoadDefaults {
 #        OpenIDConfiguration => 'https://keycloak:8080/auth/realms/MyRealm/.well-known/openid-configuration',
 #        TTL                 => 60 * 30,      # optional: time period the extracted openid-configuration is cached
 #        Name                => 'Intern4',    # optional: necessary only if one needs to differentiate between User and CustomerUser configuration e.g.
-#        SSLOptions          => {             # if special ssl options are needed; SSLVerifyHostname => 0 is also possible but should only be used for testing purposes
+#        SSLOptions          => {             # if special ssl options are needed; SSLVerifyHostname => 0 and SSLVerifyMode => 0 are also possible but should only be used for testing purposes
 #            SSLCertificate => 'SSL_cert_file',     # client certificate
 #            SSLKey         => 'SSL_key_file',      # client cert key
 #            SSLPassword    => 'SSL_passwd_cb',     # password for client cert key
@@ -1096,7 +1096,7 @@ sub LoadDefaults {
 
     # Customer Common JS
     $Self->{'Loader::Customer::CommonJS'}->{'000-Framework'} = [
-        'thirdparty/jquery-3.6.0/jquery.min.js',
+        'thirdparty/jquery-3.7.1/jquery.min.js',
         'thirdparty/jquery-browser-detection/jquery-browser-detection.js',
         'thirdparty/jquery-validate-1.19.3/jquery.validate.js',
         'thirdparty/jquery-ui-1.13.2/jquery-ui.min.js',
@@ -1137,7 +1137,7 @@ sub LoadDefaults {
 
     # Agent Common JS
     $Self->{'Loader::Agent::CommonJS'}->{'000-Framework'} = [
-        'thirdparty/jquery-3.6.0/jquery.min.js',
+        'thirdparty/jquery-3.7.1/jquery.min.js',
         'thirdparty/jquery-browser-detection/jquery-browser-detection.js',
         'thirdparty/jquery-ui-1.13.2/jquery-ui.min.js',
         'thirdparty/jquery-ui-touch-punch-0.2.3/jquery.ui.touch-punch.js',
@@ -1538,7 +1538,7 @@ via the Preferences button after logging in.
 #        OpenIDConfiguration => 'https://keycloak:8080/auth/realms/MyRealm/.well-known/openid-configuration',
 #        TTL                 => 60 * 30,      # optional: time period the extracted openid-configuration is cached
 #        Name                => 'Intern4',    # optional: necessary only if one needs to differentiate between User and CustomerUser configuration e.g.
-#        SSLOptions          => {             # if special ssl options are needed; SSLVerifyHostname => 0 is also possible but should only be used for testing purposes
+#        SSLOptions          => {             # if special ssl options are needed; SSLVerifyHostname => 0 and SSLVerifyMode => 0 are also possible but should only be used for testing purposes
 #            SSLCertificate => 'SSL_cert_file',     # client certificate
 #            SSLKey         => 'SSL_key_file',      # client cert key
 #            SSLPassword    => 'SSL_passwd_cb',     # password for client cert key
@@ -2310,7 +2310,7 @@ sub Get {
 
     # debug
     if ( $Self->{Debug} > 1 ) {
-        my $Value = defined $Self->{$What} ? $Self->{$What} : '<undef>';
+        my $Value = $Self->{$What} // '<undef>';
         print STDERR "Debug: Config.pm ->Get('$What') --> $Value\n";
     }
 
@@ -2358,7 +2358,8 @@ sub Set {
 ## nofilter(TidyAll::Plugin::OTOBO::Perl::Translatable)
 
 # This is a no-op to mark a text as translatable in the Perl code.
-#   We use our own version here instead of importing Language::Translatable to not add a dependency.
+# We use our own version of Translatable() here instead of importing Kernel::Language::Translatable(). This
+# avoids the need to add a dependency.
 
 sub Translatable {
     return shift;

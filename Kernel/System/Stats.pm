@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -845,12 +845,14 @@ build sum in x or/and y axis
 sub SumBuild {
     my ( $Self, %Param ) = @_;
 
+    my $LanguageObject = $Kernel::OM->Get('Kernel::Language');
+
     my @Data = @{ $Param{Array} };
 
     # add sum y
     if ( $Param{SumCol} ) {
 
-        push @{ $Data[1] }, Translatable('Sum');
+        push @{ $Data[1] }, $LanguageObject->Translate('Sum');
 
         for my $Index1 ( 2 .. $#Data ) {
 
@@ -882,7 +884,7 @@ sub SumBuild {
     if ( $Param{SumRow} ) {
 
         my @SumRow = ();
-        $SumRow[0] = 'Sum';
+        $SumRow[0] = $LanguageObject->Translate('Sum');
 
         for my $Index1 ( 2 .. $#Data ) {
 
@@ -2862,7 +2864,16 @@ sub _GenerateDynamicStats {
         # all elements which are shown with multiselectfields
         if ( $Ref1->{Block} ne 'Time' ) {
             my %SelectedValues;
+            SELECTEDVALUE:
             for my $Ref2 ( @{ $Ref1->{SelectedValues} } ) {
+
+                if ( !defined $Ref1->{Values}{$Ref2} ) {
+                    $Kernel::OM->Get('Kernel::System::Log')->Log(
+                        Priority => 'notice',
+                        Message  => "\"$Ref2\" is used as $Ref1->{Name} but is not present. Skipping it. (StatID $Param{StatID} - \"$Param{Title}\")",
+                    );
+                    next SELECTEDVALUE;
+                }
 
                 # Do not translate the values, please see bug#12384 for more information.
                 $SelectedValues{$Ref2} = $Ref1->{Values}{$Ref2};

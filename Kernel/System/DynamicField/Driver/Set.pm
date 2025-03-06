@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -282,6 +282,14 @@ sub EditFieldRender {
     # TODO: Improve
     my $StoreBlockData = delete $Param{LayoutObject}{BlockData};
 
+    # pass visibility state of set to inner fields
+    my %Visibility = map { ( "DynamicField_$_" => 1 ) } keys $DynamicField->%*;
+    if ( $Param{ACLHidden} ) {
+        for my $Key ( keys %Visibility ) {
+            $Visibility{$Key} = 0;
+        }
+    }
+
     for my $SetIndex ( 0 .. $#SetValue ) {
         my %Value;
         for my $Name ( sort keys $DynamicField->%* ) {
@@ -301,10 +309,10 @@ sub EditFieldRender {
 
             # can be set by preceding GetFieldState()
             PossibleValuesFilter => $Self->{PossibleValuesFilter}{ $Param{DynamicFieldConfig}->{Name} }[$SetIndex] // {},
+            Visibility           => \%Visibility,
 
             # TODO:
             #            Errors               => $Param{DFErrors},
-            #            Visibility           => $Param{Visibility},
             Object => $Param{Object},
         );
 
@@ -779,7 +787,7 @@ sub ValueLookup {
             $Param{Key}[$SetIndex]{$Name} = $BackendObject->ValueLookup(
                 %Param,
                 DynamicFieldConfig => $DynamicFieldConfig,
-                Value              => $Param{Key}[$SetIndex]{$Name},
+                Key                => $Param{Key}[$SetIndex]{$Name},
             );
         }
     }
@@ -940,6 +948,9 @@ sub _GetIncludedDynamicFields {
 
                     my $DynamicField = $GetDynamicField->($DFEntry);
                     if ( IsHashRefWithData($DynamicField) ) {
+                        if ( $DFEntry->{Label} ) {
+                            $DynamicField->{Label} = $DFEntry->{Label};
+                        }
                         $DynamicField->{Mandatory}      = $DFEntry->{Mandatory};
                         $DynamicField->{Readonly}       = $DFEntry->{Readonly};
                         $DynamicField{ $DFEntry->{DF} } = $DynamicField;
@@ -959,6 +970,9 @@ sub _GetIncludedDynamicFields {
 
             my $DynamicField = $GetDynamicField->($IncludeItem);
             if ($DynamicField) {
+                if ( $IncludeItem->{Label} ) {
+                    $DynamicField->{Label} = $IncludeItem->{Label};
+                }
                 $DynamicField->{Mandatory}          = $IncludeItem->{Mandatory};
                 $DynamicField->{Readonly}           = $IncludeItem->{Readonly};
                 $DynamicField{ $IncludeItem->{DF} } = $DynamicField;

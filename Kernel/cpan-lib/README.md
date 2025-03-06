@@ -4,10 +4,10 @@ All of these modules are implemented in pure Perl.
 License information of the bundled modules can be found in the
 [COPYING-Third-Party](../../COPYING-Third-Party) file.
 
-The original list of the bundled distributions is maintained in the module Kernel::System::Environment. Please keep
-that list up to date when upgrading or adding distributions. The list from Kernel::System::Environment is also used by
-bin/otobo.CheckModules.pl. That command can be used to generate a cpanfile for the bundled modules.
-The generated cpanfile can then be used for updating Kernel/cpan-lib.
+The original list of the bundled distributions is maintained in the module `Kernel::System::Environment. Please keep
+that list up to date when upgrading or adding distributions. The list from `Kernel::System::Environment` is also used by
+the command *bin/otobo.CheckModules.pl*. That command can be used to generate a cpanfile for the bundled modules.
+The generated cpanfile can then be used for updating *Kernel/cpan-lib*.
 But that task is not trivial. So here is an exemplar workflow:
 
 ### Preparation for both quick update and complete regeneration
@@ -17,12 +17,12 @@ Starting in the OTOBO root dir.
     bin/otobo.CheckModules.pl --inst                                        # make sure that the deps are installed
     gvim Kernel/System/Environment.pm                                       # update BundleModulesDeclarationGet() if there are changes
     bin/otobo.CheckModules.pl --bundled-cpanfile > Kernel/cpan-lib/cpanfile # in case BundleModulesDeclarationGet() list has changed
-    cd Kernel/cpan-lib
 
 ### Shortcut when there are only version updates
 
 Only update modules where the version was updated in F<Kernel/cpan-lib/cpanfile>.
 
+    cd Kernel/cpan-lib
     rm -rf local
     PERL5LIB=. cpanm --notest --installdeps . --local-lib local             # install into local/lib/perl5
     PERL5LIB=. cpanm --notest --installdeps . --local-lib local             # again, to see that the install was complete
@@ -31,12 +31,13 @@ Only update modules where the version was updated in F<Kernel/cpan-lib/cpanfile>
 
 Then examine the diffs and check in the verified changes.
 
-Finally clean up the temporary dir again:
+Finally clean up the temporary installation dir again:
 
     rm -rf local
 
 ### A fresh install of the bundled modules
 
+    cd Kernel/cpan-lib
     cpanm --notest --installdeps . --local-lib local                        # install locally into local/lib/perl5
     cpanm --notest --installdeps . --local-lib local                        # again, to see that the install was complete
 
@@ -62,10 +63,14 @@ The reason why specific files are not included in the bundle is not always evide
     find . \( -name "*.pl" \) -delete                      # just because this is the tradition
     find . -type d -empty -delete                                     # empty dirs are not needed, usually dirs with documentation only
 
-### Add files that do no originate from CPAN.
+### Add files that do no originate from CPAN or are modified by OTOBO
 
-    cp -r Devel/REPL local/lib/perl5/Devel         # the plugins Devel::REPL::Plugin::OTOBO is not on CPAN
-    cp -r Plack local/lib/perl5/Plack              # the Plack plugins are not on CPAN
+These are Perl modules that belong to OTOBO but have to be in a specific namespace.
+
+    cp -r Devel/REPL local/lib/perl5/Devel                # the plugins Devel::REPL::Plugin::OTOBO is not on CPAN
+    cp -r Plack local/lib/perl5/Plack                     # the Plack plugins are not on CPAN
+    cp -r Test2 local/lib/perl5/Test2                     # the OTOBO specific Test2::Require modules
+    cp -r HTML/Scrubber.pm local/lib/perl5/HTML/Scrubber  # with OTOBO specific modifications
 
 ### Install missing modules
 
@@ -92,7 +97,7 @@ Clean up again when module were installed
 
 ### Finalize
 
-Copy new or changed files into Kernel/cpan-lib. Remove no longer needed files. Make sure that
+Copy new or changed files into *Kernel/cpan-lib*. Remove no longer needed files. Make sure that
 the changes are submitted to git.
 
     diff -r . local/lib/perl5/ | grep -v cpanfile | grep -v README.md      # the goal is to see only 'local'

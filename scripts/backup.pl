@@ -3,7 +3,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -525,7 +525,7 @@ sub MySQLBackupForMigrateFromOTRS {
         return;
     }
 
-    say << "END_MESSAGE";
+    say <<"END_MESSAGE";
 Execute the following SQL scripts in the given order:
     - $PreprocessFile
     - $AdaptedSchemaDumpFile
@@ -735,7 +735,7 @@ sub OracleBackupForMigrateFromOTRS {
     # output files
     my $PostprocessFile = qq{$Directory/${DatabaseName}_post.sql};
 
-    say << "END_MESSAGE";
+    say <<"END_MESSAGE";
 These instruction are preliminary.
 
 Clear the user 'otobo':

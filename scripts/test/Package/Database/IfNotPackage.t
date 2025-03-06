@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -139,7 +139,7 @@ $OTOBOVersion .= '.x';
 my $RandomID = $Helper->GetRandomID();
 
 my %Packages = (
-    'Package1' => << "EOF",
+    'Package1' => <<"EOF",
 <?xml version="1.0" encoding="utf-8" ?>
 <otobo_package version="1.1">
     <Name>Package1$RandomID</Name>
@@ -163,7 +163,7 @@ my %Packages = (
 </otobo_package>
 EOF
 
-    'Package2' => << "EOF",
+    'Package2' => <<"EOF",
 <?xml version="1.0" encoding="utf-8" ?>
 <otobo_package version="1.1">
     <Name>Package2$RandomID</Name>

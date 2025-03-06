@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -292,11 +292,23 @@ sub EventHandlerTransaction {
         'Kernel::System::DB',
         'Kernel::Config',
         'Kernel::System::Log',
+        'Kernel::System::Encode',
     );
-
     for my $Object (@KeepObjects) {
         $Kernel::OM->{Objects}{$Object}            = $OuterOM->{Objects}{$Object};
         $Kernel::OM->{ObjectDependencies}{$Object} = $OuterOM->{ObjectDependencies}{$Object};
+    }
+
+    # loop protection
+    $Kernel::OM->{TransactionDepth} = ( $OuterOM->{TransactionDepth} // 0 ) + 1;
+    if ( $Kernel::OM->{TransactionDepth} > 250 ) {
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => "Ran into event loop! Stopping execution. Current unprocessed events: "
+                . join( ", " . map { $_->{Event} // '' } @{ $Self->{EventHandlerPipe} // {} } ),
+        );
+
+        return;
     }
 
     # execute events on end of transaction

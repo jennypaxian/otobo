@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -19,6 +19,7 @@ package Kernel::System::ImportExport::ObjectBackend::Translations;
 use strict;
 use warnings;
 
+use Kernel::Language              qw(Translatable);
 use Kernel::System::VariableCheck qw(IsHashRefWithData);
 
 our @ObjectDependencies = (
@@ -73,7 +74,7 @@ sub ObjectAttributesGet {
     my $Attributes = [
         {
             Key   => 'Format',
-            Name  => 'Format',
+            Name  => Translatable('Format'),
             Input => {
                 Type         => 'Selection',
                 Data         => \%FormatList,
@@ -84,7 +85,7 @@ sub ObjectAttributesGet {
         },
         {
             Key   => 'EmptyFieldsLeaveTheOldValues',
-            Name  => 'Empty fields indicate that the current values are kept',
+            Name  => Translatable('Empty fields indicate that the current values are kept'),
             Input => {
                 Type => 'Checkbox',
             },
@@ -637,7 +638,7 @@ sub ImportDataSave {
 
         $Success = $TranslationsObject->WriteTranslationFile(
             UserLanguage => $Language,
-            Deployed     => 0,
+            Import       => 1,
         ) || 0;
 
         if ( !$Success ) {

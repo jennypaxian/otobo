@@ -2,7 +2,7 @@
 // OTOBO is a web-based ticketing system for service organisations.
 // --
 // Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-// Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+// Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 // --
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -937,6 +937,9 @@ Core.UI = (function (TargetNS) {
                 .hide()
                 .on('change', function(Event) {
                     UploadFiles(Event.target.files, $(this).next('.DnDUpload'));
+
+                    // clear value to not erroneously upload rejected files with form submit
+                    $(this).val('');
                 })
                 .after($(UploadContainer))
                 .next('.DnDUpload')

@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -2330,7 +2330,11 @@ sub Import {
 
     my $CacheObject = $Kernel::OM->Get('Kernel::System::Cache');
 
-    # Disable the cache for faster import.
+    # Get the current cache configurations before import.
+    my $ConfigCacheInMemory  = $CacheObject->{CacheInMemory};
+    my $ConfigCacheInBackend = $CacheObject->{CacheInBackend};
+
+    # Temporary disable the cache configurations for faster import.
     $CacheObject->Configure(
         CacheInMemory  => 0,
         CacheInBackend => 0,
@@ -2435,6 +2439,12 @@ sub Import {
             $Result{Success}++;
         }
     }
+
+    # Re-configure the cache after import.
+    $CacheObject->Configure(
+        CacheInMemory  => $ConfigCacheInMemory,
+        CacheInBackend => $ConfigCacheInBackend,
+    );
 
     # log result
     $LogObject->Log(

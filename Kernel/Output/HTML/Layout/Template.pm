@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -368,6 +368,62 @@ sub AddJSOnDocumentComplete {
     push @{ $Self->{_JSOnDocumentComplete} }, $Param{Code};
 
     return;
+}
+
+=head2 AddJSOnDocumentCompleteIfNotExists()
+
+this functions adds JavaScript by the function C<AddJSOnDocumentComplete()> only if it does not exist yet.
+
+    my $Success = $LayoutObject->AddJSOnDocumentCompleteIfNotExists(
+        Key  => 'identifier_key_of_your_js',
+        Code => $JSBlock,
+    );
+
+Returns:
+
+    my $Success = 1;
+
+=cut
+
+sub AddJSOnDocumentCompleteIfNotExists {
+    my ( $Self, %Param ) = @_;
+
+    my $LogObject = $Kernel::OM->Get('Kernel::System::Log');
+
+    # check needed stuff
+    NEEDED:
+    for my $Needed (qw(Key Code)) {
+
+        next NEEDED if defined $Param{$Needed};
+
+        $LogObject->Log(
+            Priority => 'error',
+            Message  => "Parameter '$Needed' is needed!",
+        );
+
+        return;
+    }
+
+    my $Exists = 0;
+    CODEJS:
+    for my $CodeJS ( @{ $Self->{_JSOnDocumentComplete} || [] } ) {
+
+        next CODEJS if $CodeJS !~ m{ Key: \s $Param{Key}}xms;
+
+        $Exists = 1;
+
+        last CODEJS;
+    }
+
+    return 1 if $Exists;
+
+    my $AddCode = "// Key: $Param{Key}\n" . $Param{Code};
+
+    $Self->AddJSOnDocumentComplete(
+        Code => $AddCode,
+    );
+
+    return 1;
 }
 
 =head2 AddJSData()

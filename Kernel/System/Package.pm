@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -3330,7 +3330,6 @@ sub _GetIntegratedPackages {
     return {
         11 => {
             0 => [
-                'ITSM',    # the ITSM bundle is no longer supported in 11.0.x, can be considered as integrated
                 'Ayte-CustomTranslations',
                 'ExtendedCDBInfoTile',
                 'ImportExport',
@@ -3340,6 +3339,7 @@ sub _GetIntegratedPackages {
                 'ResponseTemplatesStatePreselection',
                 'RotherOSS-LightAdmin',
                 'RotherOSS-InternalTransitionActions',
+                'TicketTimeUnitsMandatoryOnlyWithArticle',
             ],
 
             # future releases
@@ -3905,7 +3905,7 @@ sub _CheckModuleRequired {
                 $Kernel::OM->Get('Kernel::System::Log')->Log(
                     Priority => 'error',
                     Message  => "Sorry, can't install package, because module "
-                        . "$Module->{Content} v$Module->{Version} is required "
+                        . "$Module->{Content}" . ( defined $Module->{Version} ? " v$Module->{Version}" : '' ) . " is required "
                         . "and not installed!",
                 );
                 return;

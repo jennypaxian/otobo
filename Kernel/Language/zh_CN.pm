@@ -8,7 +8,7 @@
 # Copyright (C) 2009 Qingjiu Jia <jiaqj at yahoo.com>
 # Copyright (C) 2011 Martin Liu <liuzh66 at gmail.com> http://martinliu.cn
 # Copyright (C) 2013 Michael Shi <micshi at 163.com>
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -38,7 +38,7 @@ sub Data {
     $Self->{DateFormatShort}     = '%Y.%M.%D';
     $Self->{DateInputFormat}     = '%Y.%M.%D';
     $Self->{DateInputFormatLong} = '%Y.%M.%D - %T';
-    $Self->{Completeness}        = 0.921044731311918;
+    $Self->{Completeness}        = 0.917003140421714;
 
     # csv separator
     $Self->{Separator}         = '';
@@ -1352,9 +1352,12 @@ sub Data {
         'The full path of the certification authority directory where the CA certificates are stored in the file system.' =>
             '认证机构目录的完整路径，文件系统中存储CA证书的地方。',
         'e.g. /opt/otobo/var/certificates/SOAP/CA' => '例如：/opt/otobo/var/certificates/SOAP/CA',
-        'SSL hostname verification.' => 'SSL 主机名称验证。',
+        'SSL hostname verification' => 'SSL 主机名称验证',
         'Abort the request if the hostname cannot be verified. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
             '如果无法验证主机名，则中止请求。不过禁用验证时要小心！跳过验证会有安全风险！禁用验证主要用于测试目的（比如自签名SSL证书），或者你明确知道自己在做什么。',
+        'SSL verify mode' => '',
+        'Abort the request if SSL verification fails. Disabling skips SSL verification entirely. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
+            '',
         'Controller mapping for Invoker' => '调用程序的控制器映射',
         'The controller that the invoker should send requests to. Variables marked by a \':\' will get replaced by the data value and passed along with the request. (e.g. /Ticket/:TicketID?UserLogin=:UserLogin&Password=:Password).' =>
             '控制器接受调用程序发送的请求。以“:“作为标记的变量将被数据值和其它传递参数替换。',
@@ -2121,18 +2124,25 @@ sub Data {
         'If nothing is selected, then there are no permissions in this group (tickets will not be available for the role).' =>
             '如果没有选择，角色就不会具有任何权限 (任何工单都看不见)。',
         'Toggle %s permission for all' => '全部授予/取消 %s 权限',
+        'Read only access to the ticket in this group/queue. The ticket can be found via a search and its TicketZoom can be accessed. If used for a calendar, users can see and export all appointments in the calendar.' =>
+            '',
         'move_into' => '转移到',
-        'Permissions to move tickets into this group/queue.' => '将工单转移到这个组/队列的权限。',
+        'Permissions to move tickets into this group/queue. If used for a calendar, users can modify appointments in the calendar, but without changing the calendar selection.' =>
+            '',
         'create' => 'create（创建）',
-        'Permissions to create tickets in this group/queue.' => '在这个组/队列具有创建工单的权限。',
+        'Permissions to create tickets in this group/queue. If used for a calendar, users can create and delete appointments in the calendar.' =>
+            '',
         'note' => 'note（备注）',
-        'Permissions to add notes to tickets in this group/queue.' => '在这个组/队列具有添加备注的权限。',
+        'Permissions to add notes to tickets in this group/queue. It also allows agents to be informed via the \'Inform Agents\' section in the Notes.' =>
+            '',
         'owner' => 'owner（所有者）',
-        'Permissions to change the owner of tickets in this group/queue.' =>
-            '在这个组/队列具有变更工单所有者的权限。',
+        'Permissions to be become the owner of tickets in this group/queue. One can be selected as an owner while creating a ticket or changing the owner. Being the owner gives full rw permissions to this ticket.' =>
+            '',
         'priority' => '优先级',
-        'Permissions to change the ticket priority in this group/queue.' =>
-            '在这个组/队列具有更改工单优先级的权限。',
+        'Permissions to open the priority action in this group/queue.' =>
+            '',
+        'Full read and write access to the tickets in this group/queue. If used for a calendar, users can manage the calendar itself.' =>
+            '',
 
         # Template: AdminRoleUser
         'Manage Agent-Role Relations' => '管理服务人员与角色的关系',
@@ -2557,6 +2567,13 @@ sub Data {
 
         # Template: AdminUserGroup
         'Manage Agent-Group Relations' => '管理服务人员的组权限',
+        'Permissions to move tickets into this group/queue.' => '将工单转移到这个组/队列的权限。',
+        'Permissions to create tickets in this group/queue.' => '在这个组/队列具有创建工单的权限。',
+        'Permissions to add notes to tickets in this group/queue.' => '在这个组/队列具有添加备注的权限。',
+        'Permissions to change the owner of tickets in this group/queue.' =>
+            '在这个组/队列具有变更工单所有者的权限。',
+        'Permissions to change the ticket priority in this group/queue.' =>
+            '在这个组/队列具有更改工单优先级的权限。',
 
         # Template: AgentAppointmentAgendaOverview
         'Agenda Overview' => '日程概览',
@@ -3038,7 +3055,6 @@ sub Data {
 
         # Template: AgentTicketEmail
         'Create New Email Ticket' => '创建邮件工单',
-        'Example Template' => '模板样例',
         'To customer user' => '选择客户用户',
         'Please include at least one customer user for the ticket.' => '请包括至少一个客户用户。',
         'Select this customer as the main customer.' => '选择这个客户用户作为主要联系人。',
@@ -4111,6 +4127,9 @@ sub Data {
         'The attribute of the referenced object' => '',
         'Select the attribute dynamic field that references an object' =>
             '',
+        'A field of type %s is currently not usable as lens attribute.' =>
+            '',
+        'Field %s is not a reference field.' => '',
         'Not a valid dynamic field.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScreen.pm
@@ -4122,9 +4141,9 @@ sub Data {
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScript.pm
         'Need valid field driver.' => '',
-        'Bad value in RequiredArgs.' => '',
-        'Bad value in PreviewTriggers.' => '',
-        'Bad value in StorageTriggers.' => '',
+        'Erroneous value in RequiredArgs.' => '',
+        'Erroneous value in PreviewTriggers.' => '',
+        'Erroneous value in StorageTriggers.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldSet.pm
         'Missing Dynamic Field.' => '',
@@ -4282,6 +4301,8 @@ sub Data {
         'Need valid Subaction!' => '需要有效的子动作！',
         'This field should be an integer.' => '该字段应为整数。',
         'File or Directory not found.' => '找不到文件或目录。',
+        'This key is already used' => '',
+        'This key is not allowed' => '',
 
         # Perl Module: Kernel/Modules/AdminGenericInterfaceWebservice.pm
         'There is another web service with the same name.' => '存在同名的另一WEB服务。',
@@ -5019,6 +5040,9 @@ sub Data {
         'Error: the file could not be deleted properly. Please contact your administrator (missing FileID).' =>
             '错误：文件无法正确删除，请联系您的管理员（缺少文件ID）。',
 
+        # Perl Module: Kernel/Modules/BasePassword.pm
+        'Can`t remove SessionID.' => '不能移除会话ID。',
+
         # Perl Module: Kernel/Modules/CustomerDashboardCommon.pm
         'Registration for tile %s of CustomerDashboard is invalid! Either Module or Template needed.' =>
             '',
@@ -5523,11 +5547,20 @@ sub Data {
         'between' => '在...之间',
 
         # Perl Module: Kernel/System/DynamicField/Driver/BaseReference.pm
-        'e.g. Text or Te*t' => '如：Text或Te*t',
         'Referenced object type' => '',
         'Select the type of the referenced object' => '',
         'Input mode of edit field' => '',
         'Select the input mode for the edit field.' => '',
+        'Link type' => '',
+        'Select the link type.' => '',
+        'Forwards: Referencing (Source) -> Referenced (Target)' => '',
+        'Backwards: Referenced (Source) -> Referencing (Target)' => '',
+        'Link Direction' => '',
+        'The referencing object is the one containing this dynamic field, the referenced object is the one selected as value of the dynamic field.' =>
+            '',
+
+        # Perl Module: Kernel/System/DynamicField/Driver/BaseScript.pm
+        'e.g. Text or Te*t' => '如：Text或Te*t',
 
         # Perl Module: Kernel/System/DynamicField/Driver/Checkbox.pm
         'Ignore this field.' => '忽略该字段。',
@@ -5565,6 +5598,9 @@ sub Data {
 
         # Perl Module: Kernel/System/ImportExport/FormatBackend/JSON.pm
         'Pretty print the exported concatenated JSON' => '',
+
+        # Perl Module: Kernel/System/ImportExport/ObjectBackend/Translations.pm
+        'Empty fields indicate that the current values are kept' => '',
 
         # Perl Module: Kernel/System/MigrateFromOTRS/CloneDB/Backend.pm
         'Sanity checks for database.' => '数据库完整性检查。',
@@ -6174,7 +6210,6 @@ sub Data {
             '登录失败！用户名或密码错误。',
         'Authentication succeeded, but no user data record is found in the database. Please contact the administrator.' =>
             '认证成功，但在数据库中没有找到用户数据记录，请联系系统管理员。',
-        'Can`t remove SessionID.' => '不能移除会话ID。',
         'Logout successful.' => '成功注销。',
         'Feature not active!' => '功能尚未激活!',
         'Sent password reset instructions. Please check your email.' => '密码重置说明已发送，请检查邮件。',
@@ -7242,6 +7277,7 @@ Thanks for your help!
         'Created ticket [%s] in "%s" with priority "%s" and state "%s".' =>
             '已创建工单 [%s]，在 "%s"，优先级为"%s" ，状态为"%s"。',
         'Croatian' => '克罗地亚语',
+        'Custom CSS styles for RichText articles.' => '',
         'Custom RSS Feed' => '定制RSS订阅',
         'Custom text for the page shown to customers that have no tickets yet (if you need those text translated add them to a custom translation module).' =>
             '显示给还没有工单的客户的网页定制文本（如果您需要翻译这些文本，将它们添加到定制翻译模块）。',
@@ -7459,6 +7495,8 @@ Thanks for your help!
             '定义是否允许因在个人偏好设置中没有存储共享密钥而不能使用双因素身份验证的服务人员登录。',
         'Defines if customers should be allowed to login if they have no shared secret stored in their preferences and therefore are not using two-factor authentication.' =>
             '定义是否允许因在个人偏好设置中没有存储共享密钥而不能使用双因素身份验证的客户用户登录。',
+        'Defines if parent-child translations for queues and services should be generated automatically.' =>
+            '',
         'Defines if the communication between this system and the servers that provide cloud services is possible. If set to \'Disable cloud services\', some functionality will be lost such as support data sending, Package Verify™ and product News dashboard widgets, among others.' =>
             '定义此系统与提供云服务的服务器之间是否可以进行通信。如果设置为“禁用云服务”，则某些功能将丢失，例如支持数据发送，Package Verify™和产品新闻仪表板小部件等。',
         'Defines if the enhanced mode should be used (enables use of table, replace, subscript, superscript, paste from word, etc.) in customer interface.' =>
@@ -7562,8 +7600,6 @@ Thanks for your help!
         'Defines the data objects avaliable to be translated.' => '',
         'Defines the date input format used in forms (option or input fields).' =>
             '定义表单中数据的输入格式（选项或输入字段）。',
-        'Defines the default CSS for creating CKEditor articles.' => '',
-        'Defines the default CSS used for displaying articles.' => '',
         'Defines the default agent name in the ticket zoom view of the customer interface.' =>
             '定义客户界面工单详情视图中默认的服务人员姓名。',
         'Defines the default auto response type of the article for this operation.' =>
@@ -7747,8 +7783,6 @@ Thanks for your help!
             '定义每个客户都会在其中的组（如果启用了CustomerGroupSupport-客户组支持，并且你不想管理这些组的每个客户）。',
         'Defines the headers which will be shown to generic content for the requested key.' =>
             '',
-        'Defines the height for the rich text editor component for this screen. Enter number (pixels) or percent value (relative).' =>
-            '定义本屏幕富文本编辑器组件的高度。输入数值（像素值）或百分比值（相对值）。',
         'Defines the height for the rich text editor component. Enter number (pixels) or percent value (relative).' =>
             '定义富文本编辑器组件的高度。输入数值（像素值）或百分比值（相对值）。',
         'Defines the history comment for the close ticket screen action, which gets used for ticket history in the agent interface.' =>
@@ -7806,6 +7840,8 @@ Thanks for your help!
         'Defines the hours and week days of the indicated calendar, to count the working time.' =>
             '定义指定日历每周天数和小时数，以便计算工作时间。',
         'Defines the hours and week days to count the working time.' => '定义每周天数和小时数，以便计算工作时间。',
+        'Defines the initial height in pixels for the rich text editor component for this screen.' =>
+            '',
         'Defines the key to be checked with Kernel::Modules::AgentInfo module. If this user preferences key is true, the message is accepted by the system.' =>
             '定义与Kernel::Modules::AgentInfo模块一起检查的键。如果这个用户偏好键设置为真，这个消息是被系统接受的。',
         'Defines the key to check with CustomerAccept. If this user preferences key is true, then the message is accepted by the system.' =>
@@ -8549,6 +8585,8 @@ Thanks for your help!
             '如果发送邮件模块选用了“SMTP”，并且邮件服务器需要认证，必须指定发送邮件的服务器。',
         'If any of the "SMTP" mechanisms was selected as SendmailModule, the port where your mailserver is listening for incoming connections must be specified.' =>
             '如果发送邮件模块选用了“SMTP”，并且邮件服务器需要认证，必须指定邮件服务器监听的端口。',
+        'If any of the "SSL" mechanisms was selected as SendmailModule than declare whether the mail server should be verified.' =>
+            '',
         'If enabled debugging information for ACLs is logged.' => '如果启用了此选项，将记录ACL的调试信息。',
         'If enabled debugging information for transitions is logged.' => '如果启用了此选项，将记录转换的调试信息。',
         'If enabled defines the preselected state for customer follow-up in the customer interface.' =>
@@ -8980,6 +9018,10 @@ Thanks for your help!
         'ParentChild' => '父子',
         'Path for the log file (it only applies if "FS" was selected for LoopProtectionModule and it is mandatory).' =>
             '日志文件的路径（仅在邮件循环保护模块选择文件系统时适用且这是强制需要的）。',
+        'Path to CKEditor content CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
+        'Path to CKEditor editor CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
         'Pending time' => '挂起时间',
         'People' => '人员',
         'Performs the configured action for each event (as an Invoker) for each configured web service.' =>
@@ -9130,6 +9172,8 @@ Thanks for your help!
         'Russian' => '俄语',
         'S/MIME Certificates' => 'S/MIME证书',
         'SLAs' => '',
+        'SSL_VERIFY_NONE - no verification of mail server host' => '',
+        'SSL_VERIFY_PEER - verify the mail server host' => '',
         'Salutations' => '问候语',
         'Sample command output' => '命令输出样例',
         'Saves the attachments of articles. "DB" stores all data in the database (not recommended for storing big attachments). "FS" stores the data on the filesystem; this is faster but the webserver should run under the OTOBO user. You can switch between the modules even on a system that is already in production without any loss of data. Note: Searching for attachment names is not supported when "FS" is used. "S3" is experimental.' =>
@@ -9794,8 +9838,8 @@ Thanks for your help!
         'This option defines the process tickets default state.' => '这个选项定义流程工单的默认状态。',
         'This option sets additional quick date buttons to pending dates. For ordering purposes one hash entry per array segment has to be set. The key is the button name, value is the value, where a single number n sets the date to n days from now, +n adds n days to the currently set date, and -n subtracts them.' =>
             '',
-        'This option will deny the access to customer company tickets, which are not created by the customer user.' =>
-            '这个选项将拒绝客户用户访问不是由他本人创建的客户单位工单。',
+        'This option will deny the access to customer company tickets, which are not created by the customer user. Please also deactivate "CustomerFrontend::Navigation###CustomerTicketOverview###002-Ticket" so that the button is no longer visible.' =>
+            '',
         'This setting allows you to override the built-in country list with your own list of countries. This is particularly handy if you just want to use a small select group of countries.' =>
             '这个设置允许您使用自己的国家列表覆盖内置的国家列表，如果您只想用到一小部分的国家时格外有用。',
         'This setting is deprecated. Set OTOBOTimeZone instead.' => '此设置已弃用。 替代方式是设置OTOBOTimeZone。',
@@ -9853,8 +9897,8 @@ Thanks for your help!
             '需要模块实现CustomerDashboard的注册。',
         'Tile registration for the CustomerDashboard. Module is required. Optionally, an order for items can be set. The order must have the name of the item as key and the desired position as integer value.' =>
             '',
-        'Time in seconds that gets added to the actual time if setting a pending-state (default: 86400 = 1 day).' =>
-            '如果设置一个挂起状态，添加到实际时间的秒数（默认：86400 = 1天）。',
+        'Time in seconds that gets added to the actual time if setting a pending-state. Examples: 86400 = 1 day or 604800 = 1 week.' =>
+            '',
         'To accept login information, such as an EULA or license.' => '接受登录信息，如EULA（最终用户许可协议）或许可。',
         'To download attachments.' => '下载附件。',
         'To view HTML attachments.' => '查看HTML附件。',
@@ -9909,6 +9953,8 @@ Thanks for your help!
         'Uses richtext for viewing and editing ticket notification.' => '查看和编辑工单通知时使用富文本。',
         'Uses richtext for viewing and editing: articles, salutations, signatures, standard templates, auto responses and notifications.' =>
             '查看和编辑以下内容时使用富文本：信件、问候语、签名、标准模板、自动响应和通知。',
+        'Verify mailserver when securely fetching mails from POP3S/POP3TLS/IMAPS/IMAPTLS mail accounts.' =>
+            '',
         'Vietnam' => '越南语',
         'View performance benchmark results.' => '查看性能基准测试结果.',
         'View stored article version.' => '',

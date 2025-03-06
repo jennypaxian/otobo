@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -127,6 +127,11 @@ sub EditFieldRender {
     }
     elsif ( $Param{Mandatory} ) {
         $FieldClass .= ' Validate_Required';
+    }
+
+    # set readonly css class
+    if ( $Param{Readonly} ) {
+        $FieldClass .= ' Readonly';
     }
 
     # set error css class
@@ -320,9 +325,12 @@ sub DisplayValueRender {
     my $FieldLabel = $Param{DynamicFieldConfig}->{Label};
 
     # get agents preferences
-    my %UserPreferences = $Kernel::OM->Get('Kernel::System::User')->GetPreferences(
-        UserID => $Param{LayoutObject}->{UserID},
-    );
+    my %UserPreferences;
+    if ( $Param{LayoutObject}{SessionSource} eq 'AgentInterface' ) {
+        %UserPreferences = $Kernel::OM->Get('Kernel::System::User')->GetPreferences(
+            UserID => $Param{LayoutObject}->{UserID},
+        );
+    }
 
     # remember if user already closed message about links in iframes
     if ( !defined $Self->{DoNotShowBrowserLinkMessage} ) {

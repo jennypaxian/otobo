@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -32,7 +32,7 @@ sub Data {
     $Self->{DateFormatShort}     = '';
     $Self->{DateInputFormat}     = '';
     $Self->{DateInputFormatLong} = '';
-    $Self->{Completeness}        = 0.828429900930651;
+    $Self->{Completeness}        = 0.824734559593241;
 
     # csv separator
     $Self->{Separator}         = '';
@@ -1346,8 +1346,11 @@ sub Data {
         'The full path of the certification authority directory where the CA certificates are stored in the file system.' =>
             'CA 인증서가 파일 시스템에 저장되는 인증 기관 디렉토리의 전체 경로입니다.',
         'e.g. /opt/otobo/var/certificates/SOAP/CA' => '예 : / opt / otobo / var / certificates / SOAP / CA',
-        'SSL hostname verification.' => '',
+        'SSL hostname verification' => '',
         'Abort the request if the hostname cannot be verified. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
+            '',
+        'SSL verify mode' => '',
+        'Abort the request if SSL verification fails. Disabling skips SSL verification entirely. Disable with caution! Skipping verification is a security risk! Mainly for testing purposes in case of self-signed SSL certificates, or if you know what you are doing.' =>
             '',
         'Controller mapping for Invoker' => '호출자에 대한 컨트롤러 매핑',
         'The controller that the invoker should send requests to. Variables marked by a \':\' will get replaced by the data value and passed along with the request. (e.g. /Ticket/:TicketID?UserLogin=:UserLogin&Password=:Password).' =>
@@ -2115,18 +2118,25 @@ sub Data {
         'If nothing is selected, then there are no permissions in this group (tickets will not be available for the role).' =>
             '아무 것도 선택하지 않으면이 그룹에 권한이 없습니다 (티켓을 역할에 사용할 수 없음).',
         'Toggle %s permission for all' => '모든 사용자에게 %s의 권한을 토글합니다.',
+        'Read only access to the ticket in this group/queue. The ticket can be found via a search and its TicketZoom can be accessed. If used for a calendar, users can see and export all appointments in the calendar.' =>
+            '',
         'move_into' => 'move_into',
-        'Permissions to move tickets into this group/queue.' => '이 그룹 / 대기열로 티켓을 이동하는 권한.',
+        'Permissions to move tickets into this group/queue. If used for a calendar, users can modify appointments in the calendar, but without changing the calendar selection.' =>
+            '',
         'create' => '생성',
-        'Permissions to create tickets in this group/queue.' => '이 그룹 / 대기열에서 티켓을 만들 수 있는 권한.',
+        'Permissions to create tickets in this group/queue. If used for a calendar, users can create and delete appointments in the calendar.' =>
+            '',
         'note' => '노트',
-        'Permissions to add notes to tickets in this group/queue.' => '이 그룹 / 대기열의 티켓에 메모를 추가할 권한.',
+        'Permissions to add notes to tickets in this group/queue. It also allows agents to be informed via the \'Inform Agents\' section in the Notes.' =>
+            '',
         'owner' => '소유자',
-        'Permissions to change the owner of tickets in this group/queue.' =>
-            '이 그룹 / 대기열에서 티켓 소유자를 변경할 권한.',
+        'Permissions to be become the owner of tickets in this group/queue. One can be selected as an owner while creating a ticket or changing the owner. Being the owner gives full rw permissions to this ticket.' =>
+            '',
         'priority' => '우선 순위',
-        'Permissions to change the ticket priority in this group/queue.' =>
-            '이 그룹 / 큐에서 티켓 우선 순위를 변경할 권한.',
+        'Permissions to open the priority action in this group/queue.' =>
+            '',
+        'Full read and write access to the tickets in this group/queue. If used for a calendar, users can manage the calendar itself.' =>
+            '',
 
         # Template: AdminRoleUser
         'Manage Agent-Role Relations' => '에이전트 역할 관계 관리',
@@ -2551,6 +2561,13 @@ sub Data {
 
         # Template: AdminUserGroup
         'Manage Agent-Group Relations' => '상담원-그룹 관계 관리',
+        'Permissions to move tickets into this group/queue.' => '이 그룹 / 대기열로 티켓을 이동하는 권한.',
+        'Permissions to create tickets in this group/queue.' => '이 그룹 / 대기열에서 티켓을 만들 수 있는 권한.',
+        'Permissions to add notes to tickets in this group/queue.' => '이 그룹 / 대기열의 티켓에 메모를 추가할 권한.',
+        'Permissions to change the owner of tickets in this group/queue.' =>
+            '이 그룹 / 대기열에서 티켓 소유자를 변경할 권한.',
+        'Permissions to change the ticket priority in this group/queue.' =>
+            '이 그룹 / 큐에서 티켓 우선 순위를 변경할 권한.',
 
         # Template: AgentAppointmentAgendaOverview
         'Agenda Overview' => 'Agenda 개요',
@@ -3032,7 +3049,6 @@ sub Data {
 
         # Template: AgentTicketEmail
         'Create New Email Ticket' => '새 전자 메일 티켓 만들기',
-        'Example Template' => '템플릿 예제',
         'To customer user' => '고객 사용자에게',
         'Please include at least one customer user for the ticket.' => '적어도 한 명의 고객 사용자를 티켓에 포함하십시오.',
         'Select this customer as the main customer.' => '이 고객을 주요 고객으로 선택하십시오.',
@@ -4105,6 +4121,9 @@ sub Data {
         'The attribute of the referenced object' => '',
         'Select the attribute dynamic field that references an object' =>
             '',
+        'A field of type %s is currently not usable as lens attribute.' =>
+            '',
+        'Field %s is not a reference field.' => '',
         'Not a valid dynamic field.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScreen.pm
@@ -4116,9 +4135,9 @@ sub Data {
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldScript.pm
         'Need valid field driver.' => '',
-        'Bad value in RequiredArgs.' => '',
-        'Bad value in PreviewTriggers.' => '',
-        'Bad value in StorageTriggers.' => '',
+        'Erroneous value in RequiredArgs.' => '',
+        'Erroneous value in PreviewTriggers.' => '',
+        'Erroneous value in StorageTriggers.' => '',
 
         # Perl Module: Kernel/Modules/AdminDynamicFieldSet.pm
         'Missing Dynamic Field.' => '',
@@ -4276,6 +4295,8 @@ sub Data {
         'Need valid Subaction!' => '유효한 서브 액션이 필요합니다!',
         'This field should be an integer.' => '이 필드는 정수여야 합니다.',
         'File or Directory not found.' => '파일 또는 디렉터리를 찾을 수 없음.',
+        'This key is already used' => '',
+        'This key is not allowed' => '',
 
         # Perl Module: Kernel/Modules/AdminGenericInterfaceWebservice.pm
         'There is another web service with the same name.' => '같은 이름의 다른 웹 서비스가 있습니다.',
@@ -5013,6 +5034,9 @@ sub Data {
         'Error: the file could not be deleted properly. Please contact your administrator (missing FileID).' =>
             '오류 : 파일을 제대로 삭제할 수 없습니다. 관리자에게 문의하십시오 (누락 된 FileID).',
 
+        # Perl Module: Kernel/Modules/BasePassword.pm
+        'Can`t remove SessionID.' => 'SessionID를 제거 할 수 없습니다.',
+
         # Perl Module: Kernel/Modules/CustomerDashboardCommon.pm
         'Registration for tile %s of CustomerDashboard is invalid! Either Module or Template needed.' =>
             '',
@@ -5517,11 +5541,20 @@ sub Data {
         'between' => '사이에',
 
         # Perl Module: Kernel/System/DynamicField/Driver/BaseReference.pm
-        'e.g. Text or Te*t' => '예 : 텍스트 또는 문자 *',
         'Referenced object type' => '',
         'Select the type of the referenced object' => '',
         'Input mode of edit field' => '',
         'Select the input mode for the edit field.' => '',
+        'Link type' => '',
+        'Select the link type.' => '',
+        'Forwards: Referencing (Source) -> Referenced (Target)' => '',
+        'Backwards: Referenced (Source) -> Referencing (Target)' => '',
+        'Link Direction' => '',
+        'The referencing object is the one containing this dynamic field, the referenced object is the one selected as value of the dynamic field.' =>
+            '',
+
+        # Perl Module: Kernel/System/DynamicField/Driver/BaseScript.pm
+        'e.g. Text or Te*t' => '예 : 텍스트 또는 문자 *',
 
         # Perl Module: Kernel/System/DynamicField/Driver/Checkbox.pm
         'Ignore this field.' => '이 입력란을 무시하십시오.',
@@ -5559,6 +5592,9 @@ sub Data {
 
         # Perl Module: Kernel/System/ImportExport/FormatBackend/JSON.pm
         'Pretty print the exported concatenated JSON' => '',
+
+        # Perl Module: Kernel/System/ImportExport/ObjectBackend/Translations.pm
+        'Empty fields indicate that the current values are kept' => '',
 
         # Perl Module: Kernel/System/MigrateFromOTRS/CloneDB/Backend.pm
         'Sanity checks for database.' => '',
@@ -6168,7 +6204,6 @@ sub Data {
             '로그인 실패! 사용자 이름 또는 암호가 잘못 입력되었습니다.',
         'Authentication succeeded, but no user data record is found in the database. Please contact the administrator.' =>
             '인증에 성공했지만 데이터베이스에 사용자 데이터 레코드가 없습니다. 관리자에게 문의하십시오.',
-        'Can`t remove SessionID.' => 'SessionID를 제거 할 수 없습니다.',
         'Logout successful.' => '로그아웃에 성공했습니다.',
         'Feature not active!' => '기능이 활성화되지 않았습니다!',
         'Sent password reset instructions. Please check your email.' => '보낸 암호 재설정 지침. 이메일을 확인하십시오.',
@@ -7238,6 +7273,7 @@ Thanks for your help!
         'Created ticket [%s] in "%s" with priority "%s" and state "%s".' =>
             '티켓 [%s] 생성 : "%s", 우선 순위 -"%s" , 상태 -"%s"',
         'Croatian' => '크로아티아 사람',
+        'Custom CSS styles for RichText articles.' => '',
         'Custom RSS Feed' => '사용자 정의 RSS 피드',
         'Custom text for the page shown to customers that have no tickets yet (if you need those text translated add them to a custom translation module).' =>
             '티켓이 없는 고객에게 표시되는 페이지의 사용자 정의 텍스트(번역된 텍스트가 필요한 경우 사용자 정의 번역 모듈에 추가).',
@@ -7455,6 +7491,8 @@ Thanks for your help!
             '상담원이 기본 설정에 공유 암호가 저장되어 있지 않아 이중 인증을 사용하지 않는 경우 로그인을 허용해야하는지 여부를 정의합니다.',
         'Defines if customers should be allowed to login if they have no shared secret stored in their preferences and therefore are not using two-factor authentication.' =>
             '공유 설정이 환경 설정에 저장되어 있지 않아 이중 인증을 사용하지 않는 경우 고객이 로그인 할 수 있도록 허용해야하는지 정의합니다.',
+        'Defines if parent-child translations for queues and services should be generated automatically.' =>
+            '',
         'Defines if the communication between this system and the servers that provide cloud services is possible. If set to \'Disable cloud services\', some functionality will be lost such as support data sending, Package Verify™ and product News dashboard widgets, among others.' =>
             '',
         'Defines if the enhanced mode should be used (enables use of table, replace, subscript, superscript, paste from word, etc.) in customer interface.' =>
@@ -7558,8 +7596,6 @@ Thanks for your help!
         'Defines the data objects avaliable to be translated.' => '',
         'Defines the date input format used in forms (option or input fields).' =>
             '양식 (옵션 또는 입력 필드)에 사용되는 날짜 입력 형식을 정의합니다.',
-        'Defines the default CSS for creating CKEditor articles.' => '',
-        'Defines the default CSS used for displaying articles.' => '',
         'Defines the default agent name in the ticket zoom view of the customer interface.' =>
             '',
         'Defines the default auto response type of the article for this operation.' =>
@@ -7743,8 +7779,6 @@ Thanks for your help!
             '모든 고객이 속할 그룹을 정의합니다 (CustomerGroupSupport가 사용 가능하고이 그룹의 모든 고객을 관리하지 않으려는 경우).',
         'Defines the headers which will be shown to generic content for the requested key.' =>
             '',
-        'Defines the height for the rich text editor component for this screen. Enter number (pixels) or percent value (relative).' =>
-            '이 화면의 서식있는 텍스트 편집기 구성 요소의 높이를 정의합니다. 숫자 (픽셀) 또는 퍼센트 값 (상대)을 입력하십시오.',
         'Defines the height for the rich text editor component. Enter number (pixels) or percent value (relative).' =>
             '서식있는 텍스트 편집기 구성 요소의 높이를 정의합니다. 숫자 (픽셀) 또는 퍼센트 값 (상대)을 입력하십시오.',
         'Defines the history comment for the close ticket screen action, which gets used for ticket history in the agent interface.' =>
@@ -7802,6 +7836,8 @@ Thanks for your help!
         'Defines the hours and week days of the indicated calendar, to count the working time.' =>
             '작업 시간을 계산하기 위해 표시된 달력의 시간과 요일을 정의합니다.',
         'Defines the hours and week days to count the working time.' => '근무 시간을 계산할 시간과 요일을 정의합니다.',
+        'Defines the initial height in pixels for the rich text editor component for this screen.' =>
+            '',
         'Defines the key to be checked with Kernel::Modules::AgentInfo module. If this user preferences key is true, the message is accepted by the system.' =>
             'Kernel :: Modules :: AgentInfo 모듈로 확인할 키를 정의합니다. 이 사용자 기본 설정 키가 true이면 시스템에서 메시지를 수락합니다.',
         'Defines the key to check with CustomerAccept. If this user preferences key is true, then the message is accepted by the system.' =>
@@ -8545,6 +8581,8 @@ Thanks for your help!
             '"SMTP"메커니즘 중 하나가 SendmailModule로 선택된 경우 메일을 보내는 메일 호스트를 지정해야합니다.',
         'If any of the "SMTP" mechanisms was selected as SendmailModule, the port where your mailserver is listening for incoming connections must be specified.' =>
             '"SMTP"메커니즘 중 하나가 SendmailModule로 선택된 경우 메일 서버가 들어오는 연결을 수신하는 포트를 지정해야합니다.',
+        'If any of the "SSL" mechanisms was selected as SendmailModule than declare whether the mail server should be verified.' =>
+            '',
         'If enabled debugging information for ACLs is logged.' => '활성화 된 경우 ACL에 대한 디버깅 정보가 기록됩니다.',
         'If enabled debugging information for transitions is logged.' => '활성화 된 경우 전환에 대한 디버깅 정보가 기록됩니다.',
         'If enabled defines the preselected state for customer follow-up in the customer interface.' =>
@@ -8976,6 +9014,10 @@ Thanks for your help!
         'ParentChild' => '부모 자녀',
         'Path for the log file (it only applies if "FS" was selected for LoopProtectionModule and it is mandatory).' =>
             '로그 파일 경로 (LoopProtectionModule에 대해 "FS"가 선택되고 필수 항목 인 경우에만 적용됩니다).',
+        'Path to CKEditor content CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
+        'Path to CKEditor editor CSS file. Changes to this setting will only consistently apply after deleting the OTOBO Cache via the Maint::Cache::Delete command!' =>
+            '',
         'Pending time' => '보류 시간',
         'People' => '사람들',
         'Performs the configured action for each event (as an Invoker) for each configured web service.' =>
@@ -9126,6 +9168,8 @@ Thanks for your help!
         'Russian' => '러시아인',
         'S/MIME Certificates' => 'S / MIME 인증서',
         'SLAs' => '',
+        'SSL_VERIFY_NONE - no verification of mail server host' => '',
+        'SSL_VERIFY_PEER - verify the mail server host' => '',
         'Salutations' => '인사말',
         'Sample command output' => '샘플 명령 출력',
         'Saves the attachments of articles. "DB" stores all data in the database (not recommended for storing big attachments). "FS" stores the data on the filesystem; this is faster but the webserver should run under the OTOBO user. You can switch between the modules even on a system that is already in production without any loss of data. Note: Searching for attachment names is not supported when "FS" is used. "S3" is experimental.' =>
@@ -9790,8 +9834,8 @@ Thanks for your help!
         'This option defines the process tickets default state.' => '이 옵션은 프로세스 티켓 기본 상태를 정의합니다.',
         'This option sets additional quick date buttons to pending dates. For ordering purposes one hash entry per array segment has to be set. The key is the button name, value is the value, where a single number n sets the date to n days from now, +n adds n days to the currently set date, and -n subtracts them.' =>
             '',
-        'This option will deny the access to customer company tickets, which are not created by the customer user.' =>
-            '이 옵션은 고객 사용자가 생성하지 않은 고객 회사 티켓에 대한 액세스를 거부합니다.',
+        'This option will deny the access to customer company tickets, which are not created by the customer user. Please also deactivate "CustomerFrontend::Navigation###CustomerTicketOverview###002-Ticket" so that the button is no longer visible.' =>
+            '',
         'This setting allows you to override the built-in country list with your own list of countries. This is particularly handy if you just want to use a small select group of countries.' =>
             '이 설정을 사용하면 기본 제공 국가 목록을 자신의 국가 목록으로 대체할 수 있습니다. 소규모 그룹을 선택하고 싶을 때 특히 편리합니다.',
         'This setting is deprecated. Set OTOBOTimeZone instead.' => '이 설정은 사용되지 않습니다. 대신 OTOBOTimeZone을 설정하십시오.',
@@ -9849,8 +9893,8 @@ Thanks for your help!
             '',
         'Tile registration for the CustomerDashboard. Module is required. Optionally, an order for items can be set. The order must have the name of the item as key and the desired position as integer value.' =>
             '',
-        'Time in seconds that gets added to the actual time if setting a pending-state (default: 86400 = 1 day).' =>
-            '보류 중 상태 (기본값 : 86400 = 1 일)를 설정하면 실제 시간에 추가되는 시간 초입니다.',
+        'Time in seconds that gets added to the actual time if setting a pending-state. Examples: 86400 = 1 day or 604800 = 1 week.' =>
+            '',
         'To accept login information, such as an EULA or license.' => 'EULA 또는 라이센스와 같은 로그인 정보를 수락합니다.',
         'To download attachments.' => '첨부 파일을 다운로드 하려면.',
         'To view HTML attachments.' => 'HTML 첨부 파일을 봅니다.',
@@ -9905,6 +9949,8 @@ Thanks for your help!
         'Uses richtext for viewing and editing ticket notification.' => '티켓 통지를보고 편집하기 위해 richtext를 사용합니다.',
         'Uses richtext for viewing and editing: articles, salutations, signatures, standard templates, auto responses and notifications.' =>
             '기사, 인사말, 서명, 표준 템플릿, 자동 응답 및 알림과 같은보기 및 편집을 위해 richtext를 사용합니다.',
+        'Verify mailserver when securely fetching mails from POP3S/POP3TLS/IMAPS/IMAPTLS mail accounts.' =>
+            '',
         'Vietnam' => '베트남',
         'View performance benchmark results.' => '실적 벤치 마크 결과를 봅니다.',
         'View stored article version.' => '',

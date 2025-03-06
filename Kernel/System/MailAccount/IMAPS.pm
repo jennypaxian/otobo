@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -24,11 +24,13 @@ use parent qw(Kernel::System::MailAccount::IMAP);
 # core modules
 
 # CPAN modules
-use IO::Socket::SSL ();
+use IO::Socket::SSL   ();
+use Net::IMAP::Simple ();
 
 # OTOBO modules
 
 our @ObjectDependencies = (
+    'Kernel::Config',
     'Kernel::System::Log',
 );
 
@@ -45,16 +47,18 @@ sub Connect {
         }
     }
 
-    my $Type = 'IMAPS';
+    my $Type          = 'IMAPS';
+    my $SSLVerifyMode = $Kernel::OM->Get('Kernel::Config')->Get('PostMasterSSLVerifyMode') // IO::Socket::SSL::SSL_VERIFY_NONE();
 
     # connect to host
+    # The underlying socket is an IO::Socket::SSL from the beginning.
     my $IMAPObject = Net::IMAP::Simple->new(
         $Param{Host},
         timeout     => $Param{Timeout},
         debug       => $Param{Debug},
         use_ssl     => 1,
         ssl_options => [
-            SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE(),
+            SSL_verify_mode => $SSLVerifyMode,
         ],
     );
     if ( !$IMAPObject ) {

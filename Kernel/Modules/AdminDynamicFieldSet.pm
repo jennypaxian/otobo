@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -87,7 +87,7 @@ sub _Add {
     my %GetParam;
 
     # check if we clone from an existing field
-    my $CloneFieldID = $ParamObject->GetParam( Param => "ID" );
+    my $CloneFieldID = $ParamObject->GetParam( Param => "CloneFieldID" );
     if ($CloneFieldID) {
         my $FieldConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
             ID => $CloneFieldID,
@@ -231,7 +231,7 @@ sub _CheckInclude {
 
     LINE:
     for my $Line ( $Param{IncludeFrontend}->@* ) {
-        if ( $Line->{Grid} ) {
+        if ( IsHashRefWithData( $Line->{Grid} ) ) {
 
             if ( !IsArrayRefWithData( $Line->{Grid}{Rows} ) ) {
                 $Errors{IncludeServerError}        = 'ServerError';
@@ -258,7 +258,7 @@ sub _CheckInclude {
 
                 for my $DFEntry ( $Row->@* ) {
 
-                    if ( !$DFEntry->{DF} ) {
+                    if ( !IsHashRefWithData($DFEntry) || !$DFEntry->{DF} ) {
                         $Errors{IncludeServerError}        = 'ServerError';
                         $Errors{IncludeServerErrorMessage} = Translatable('Misconfigured Grid - Rows must contain entries with key \'DF\'!');
                         last LINE;
@@ -1029,6 +1029,12 @@ sub _ShowScreen {
             );
         }
 
+    }
+    elsif ( $Param{CloneFieldID} && IsArrayRefWithData( $Param{Include} ) ) {
+
+        $Param{Include} = $Kernel::OM->Get('Kernel::System::YAML')->Dump(
+            Data => $Param{Include},
+        );
     }
 
     my $FilterStrg = '';

@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1543,7 +1543,23 @@ sub DESTROY {
 
 Returns a list of valid dynamic fields.
 
-    my $DynamicFields = $DynamicFieldObject->GetValidDynamicFields();
+    my $DynamicFields = $DynamicFieldObject->GetValidDynamicFields(
+
+        # object  type (optional) as STRING or as ARRAYREF
+        # The special object type 'All' places no restriction on the object type when
+        # it is passed as a single string.
+        ObjectType => 'Ticket',
+        ObjectType => ['Ticket', 'Article'],
+
+        # optional, filter by name of the dynamic field
+        # only the fields where there the field name has a true value are returned
+        FieldFilter => {
+            nameforfield => 1,
+            fieldname    => 2,
+            other        => 0,
+            otherfield   => 0,
+        },
+    );
 
 Returns:
 
@@ -1562,6 +1578,7 @@ sub GetValidDynamicFields {
     my $DynamicFieldValid = $ConfigObject->Get('Znuny4OTOBOAdvancedDynamicFields::DynamicFieldValid');
 
     my $DynamicFieldList = $Self->DynamicFieldListGet(
+        %Param,
         ResultType => 'HASH',
         Valid      => $DynamicFieldValid,
     );
@@ -1766,7 +1783,7 @@ sub _DynamicFieldReorder {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
                 Message  => 'An error was detected while re ordering the field list on field '
-                    . "DynamicField->{Name}!",
+                    . "$DynamicField->{Name}!",
             );
             return;
         }

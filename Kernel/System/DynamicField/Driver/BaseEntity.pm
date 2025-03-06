@@ -1,7 +1,7 @@
 # --
 # OTOBO is a web-based ticketing system for service organisations.
 # --
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -89,7 +89,7 @@ sub ValueSet {
 
     if ( !$Param{Value} ) {
         return $Kernel::OM->Get('Kernel::System::DynamicFieldValue')->ValueDelete(
-            FieldID  => $Param{DynamicFieldConfig}->{ID},
+            FieldID  => $Param{DynamicFieldConfig}{ID},
             ObjectID => $Param{ObjectID},
             UserID   => $Param{UserID},
         );
@@ -99,7 +99,7 @@ sub ValueSet {
     }
     elsif ( !$Param{Value}->@* ) {
         return $Kernel::OM->Get('Kernel::System::DynamicFieldValue')->ValueDelete(
-            FieldID  => $Param{DynamicFieldConfig}->{ID},
+            FieldID  => $Param{DynamicFieldConfig}{ID},
             ObjectID => $Param{ObjectID},
             UserID   => $Param{UserID},
         );
@@ -109,37 +109,11 @@ sub ValueSet {
 
     # perform search if neccessary
     if ( $Param{ExternalSource} && $Param{DynamicFieldConfig}{Config}{ImportSearchAttribute} && $Self->can('SearchObjects') ) {
-
-        my @Values;
-        for my $ValueItem ( $Param{Value}->@* ) {
-
-            # perform search based on value and previously fetched data
-            my @ObjectIDs = $Self->SearchObjects(
-                DynamicFieldConfig => $Param{DynamicFieldConfig},
-                Term               => $ValueItem,
-                ExternalSource     => 1,
-                UserID             => $Param{UserID},
-            );
-
-            if ( !@ObjectIDs ) {
-                $Kernel::OM->Get('Kernel::System::Log')->Log(
-                    Priority => 'notice',
-                    Message  => "No objects found for $Param{DynamicFieldConfig}{Name}, search term $ValueItem.",
-                );
-                return;
-            }
-            elsif ( @ObjectIDs > 1 ) {
-                $Kernel::OM->Get('Kernel::System::Log')->Log(
-                    Priority => 'notice',
-                    Message  => "Ambiguous result found for $Param{DynamicFieldConfig}{Name}, search term $ValueItem.",
-                );
-                return;
-            }
-            else {
-                push @Values, $ObjectIDs[0];
-            }
-        }
-        $Param{Value} = @Values ? \@Values : $Param{Value};
+        $Param{Value} = $Self->_TransformExternalSource(
+            DynamicFieldConfig => $Param{DynamicFieldConfig},
+            ValueArray         => $Param{Value},
+            UserID             => $Param{UserID},
+        );
     }
 
     # for multiselect no set or multivalue structures
@@ -151,7 +125,7 @@ sub ValueSet {
         ];
 
         return $Kernel::OM->Get('Kernel::System::DynamicFieldValue')->ValueSet(
-            FieldID  => $Param{DynamicFieldConfig}->{ID},
+            FieldID  => $Param{DynamicFieldConfig}{ID},
             ObjectID => $Param{ObjectID},
             Value    => $DBValue,
             UserID   => $Param{UserID},
@@ -162,7 +136,7 @@ sub ValueSet {
     my $Value = $Param{DynamicFieldConfig}{Config}{MultiValue}
         ? $Param{Value}
         : $Param{Set} ? [ map { $_->[0] } $Param{Value}->@* ]
-        :               $Param{Value}->[0];
+        :               $Param{Value}[0];
 
     my $DBValue = $Self->ValueStructureToDB(
         Value      => $Value,
@@ -172,10 +146,35 @@ sub ValueSet {
     );
 
     return $Kernel::OM->Get('Kernel::System::DynamicFieldValue')->ValueSet(
-        FieldID  => $Param{DynamicFieldConfig}->{ID},
+        FieldID  => $Param{DynamicFieldConfig}{ID},
         ObjectID => $Param{ObjectID},
         Value    => $DBValue,
         UserID   => $Param{UserID},
+    );
+}
+
+sub ValueIsDifferent {
+    my ( $Self, %Param ) = @_;
+
+    my $Value1 = !$Param{Value1} ? [] :
+        ref $Param{Value1} ? [ $Param{Value1}->@* ] : [ $Param{Value1} ];
+
+    my $Value2 = !$Param{Value2} ? [] :
+        ref $Param{Value2} ? $Param{Value2} : [ $Param{Value2} ];
+
+    # perform search and replace Value1 if neccessary
+    if ( $Param{ExternalSource} && $Param{DynamicFieldConfig}{Config}{ImportSearchAttribute} && $Self->can('SearchObjects') ) {
+        $Value1 = $Self->_TransformExternalSource(
+            DynamicFieldConfig => $Param{DynamicFieldConfig},
+            ValueArray         => $Value1,
+            UserID             => 1,
+        );
+    }
+
+    return $Self->SUPER::ValueIsDifferent(
+        DynamicFieldConfig => $Param{DynamicFieldConfig},
+        Value1             => $Value1,
+        Value2             => $Value2,
     );
 }
 
@@ -256,8 +255,8 @@ sub EditFieldRender {
     my ( $Self, %Param ) = @_;
 
     # take config from field config
-    my $FieldConfig = $Param{DynamicFieldConfig}->{Config};
-    my $FieldName   = 'DynamicField_' . $Param{DynamicFieldConfig}->{Name};
+    my $FieldConfig = $Param{DynamicFieldConfig}{Config};
+    my $FieldName   = 'DynamicField_' . $Param{DynamicFieldConfig}{Name};
 
     my $Value = $Param{Value} // '';
 
@@ -306,7 +305,6 @@ sub EditFieldRender {
 
     # set PossibleValues, use PossibleValuesFilter if defined
     my $PossibleValues = $Param{PossibleValuesFilter} // $Self->PossibleValuesGet(%Param);
-
     my %FieldTemplateData;
 
     my @SelectionHTML;
@@ -424,13 +422,13 @@ sub EditFieldRender {
 sub EditFieldValueGet {
     my ( $Self, %Param ) = @_;
 
-    my $FieldName = 'DynamicField_' . $Param{DynamicFieldConfig}->{Name};
+    my $FieldName = 'DynamicField_' . $Param{DynamicFieldConfig}{Name};
 
     my $Value;
 
     # check if there is a Template and retrieve the dynamic field value from there
-    if ( IsHashRefWithData( $Param{Template} ) && defined $Param{Template}->{$FieldName} ) {
-        $Value = $Param{Template}->{$FieldName};
+    if ( IsHashRefWithData( $Param{Template} ) && defined $Param{Template}{$FieldName} ) {
+        $Value = $Param{Template}{$FieldName};
     }
 
     # otherwise get dynamic field value from the web request
@@ -441,7 +439,7 @@ sub EditFieldValueGet {
     {
         my @Data = $Param{ParamObject}->GetArray( Param => $FieldName );
 
-        if ( $Param{DynamicFieldConfig}->{Config}{MultiValue} ) {
+        if ( $Param{DynamicFieldConfig}{Config}{MultiValue} ) {
 
             # delete the template value
             pop @Data;
@@ -494,7 +492,6 @@ sub EditFieldValueValidate {
 
     # get possible values list
     my $PossibleValues = $Self->PossibleValuesGet(%Param);
-
     for my $ValueItem ( @{$Value} ) {
 
         # perform necessary validations
@@ -532,11 +529,20 @@ sub DisplayValueRender {
         :                            ('');
 
     $Param{ValueMaxChars} ||= '';
-
+    my $PossibleValues = $Self->PossibleValuesGet(
+        %Param
+    );
     my @ReadableValues;
     my @ReadableTitles;
     for my $ValueItem (@Values) {
         $ValueItem //= '';
+
+        # get real value
+        if ($ValueItem) {
+
+            # get readable value
+            $ValueItem = $PossibleValues->{$ValueItem};
+        }
 
         # set title as value after update and before limit
         push @ReadableTitles, $ValueItem;
@@ -641,7 +647,7 @@ sub StatsFieldParameterBuild {
 
     # get historical values from database
     my $HistoricalValues = $Kernel::OM->Get('Kernel::System::DynamicFieldValue')->HistoricalValueGet(
-        FieldID   => $Param{DynamicFieldConfig}->{ID},
+        FieldID   => $Param{DynamicFieldConfig}{ID},
         ValueType => 'Text,',
     );
 
@@ -657,8 +663,8 @@ sub StatsFieldParameterBuild {
 
     return {
         Values  => $Values,
-        Name    => $Param{DynamicFieldConfig}->{Label},
-        Element => 'DynamicField_' . $Param{DynamicFieldConfig}->{Name},
+        Name    => $Param{DynamicFieldConfig}{Label},
+        Element => 'DynamicField_' . $Param{DynamicFieldConfig}{Name},
         Block   => 'MultiSelectField',
     };
 }
@@ -678,13 +684,22 @@ sub ReadableValueRender {
     else {
         @Values = ( $Param{Value} );
     }
-
+    my $PossibleValues = $Self->PossibleValuesGet(
+        %Param
+    );
     my @ReadableValues;
+    for my $ValueItem (@Values) {
+        $ValueItem //= '';
 
-    for my $Item (@Values) {
-        $Item //= '';
+        # get real value
+        if ($ValueItem) {
 
-        push @ReadableValues, $Item || '';
+            # get readable value
+            $ValueItem = $PossibleValues->{$ValueItem};
+        }
+
+        # set title as value after update and before limit
+        push @ReadableValues, $ValueItem || '';
     }
 
     # set new line separator
@@ -711,7 +726,7 @@ sub ReadableValueRender {
 sub TemplateValueTypeGet {
     my ( $Self, %Param ) = @_;
 
-    my $FieldName = 'DynamicField_' . $Param{DynamicFieldConfig}->{Name};
+    my $FieldName = 'DynamicField_' . $Param{DynamicFieldConfig}{Name};
 
     # set the field types
     my $EditValueType   = 'ARRAY';
@@ -739,16 +754,16 @@ sub TemplateValueTypeGet {
 sub ObjectMatch {
     my ( $Self, %Param ) = @_;
 
-    my $FieldName = 'DynamicField_' . $Param{DynamicFieldConfig}->{Name};
+    my $FieldName = 'DynamicField_' . $Param{DynamicFieldConfig}{Name};
 
     # the attribute must be an array
-    return 0 if !IsArrayRefWithData( $Param{ObjectAttributes}->{$FieldName} );
+    return 0 if !IsArrayRefWithData( $Param{ObjectAttributes}{$FieldName} );
 
     my $Match;
 
     # search in all values for this attribute
     VALUE:
-    for my $AttributeValue ( @{ $Param{ObjectAttributes}->{$FieldName} } ) {
+    for my $AttributeValue ( @{ $Param{ObjectAttributes}{$FieldName} } ) {
 
         next VALUE if !defined $AttributeValue;
 
@@ -811,7 +826,7 @@ sub ColumnFilterValuesGet {
     # get column filter values from database
     my $ColumnFilterValues = $Kernel::OM->Get("Kernel::System::${ObjectType}::ColumnFilter")->DynamicFieldFilterValuesGet(
         %Param,
-        FieldID   => $Param{DynamicFieldConfig}->{ID},
+        FieldID   => $Param{DynamicFieldConfig}{ID},
         ValueType => $Self->{ValueType},
     );
 
@@ -834,11 +849,57 @@ sub ColumnFilterValuesGet {
         for my $ValueKey ( sort keys %{$ColumnFilterValues} ) {
 
             my $OriginalValueName = $ColumnFilterValues->{$ValueKey};
-            $ColumnFilterValues->{$ValueKey} = $Param{LayoutObject}->{LanguageObject}->Translate($OriginalValueName);
+            $ColumnFilterValues->{$ValueKey} = $Param{LayoutObject}{LanguageObject}->Translate($OriginalValueName);
         }
     }
 
     return $ColumnFilterValues;
+}
+
+sub _TransformExternalSource {
+    my ( $Self, %Param ) = @_;
+
+    my @Values;
+    VALUE:
+    for my $ValueItem ( $Param{ValueArray}->@* ) {
+
+        # keep empty values
+        if ( !defined $ValueItem || $ValueItem eq '' ) {
+            push @Values, undef;
+
+            next VALUE;
+        }
+
+        # perform search based on value and previously fetched data
+        my @ObjectIDs = $Self->SearchObjects(
+            DynamicFieldConfig => $Param{DynamicFieldConfig},
+            Term               => $ValueItem,
+            ExternalSource     => 1,
+            UserID             => $Param{UserID},
+        );
+
+        if ( !@ObjectIDs ) {
+            $Kernel::OM->Get('Kernel::System::Log')->Log(
+                Priority => 'notice',
+                Message  => "No objects found for $Param{DynamicFieldConfig}{Name}, search term $ValueItem.",
+            );
+
+            push @Values, undef;
+        }
+        elsif ( @ObjectIDs > 1 ) {
+            $Kernel::OM->Get('Kernel::System::Log')->Log(
+                Priority => 'notice',
+                Message  => "Ambiguous result found for $Param{DynamicFieldConfig}{Name}, search term $ValueItem.",
+            );
+
+            push @Values, undef;
+        }
+        else {
+            push @Values, $ObjectIDs[0];
+        }
+    }
+
+    return \@Values;
 }
 
 1;

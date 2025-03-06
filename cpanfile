@@ -5,7 +5,7 @@
 # Required for compressed file generation (in perlcore).
 requires 'Archive::Tar';
 
-# Required for compressed file generation.
+# Required for compressed file generation. Needed by Excel::Writer::XSLX, which is used in Kernel::System::CSV
 requires 'Archive::Zip';
 
 # Support for readonly Perl variables
@@ -37,6 +37,10 @@ requires 'File::chmod';
 
 # HTTP style message
 requires 'HTTP::Message', '>= 6.18';
+
+# Required for SSL connections to web and mail servers
+# Please consider updating to version 2.066 or higher: This version fixes email sending (bug#14357).
+requires 'IO::Socket::SSL';
 
 # A JavaScript minifier written in XS
 requires 'JavaScript::Minifier::XS';
@@ -157,6 +161,9 @@ feature 'devel:debugging', 'Features which can be useful in development environm
     # convenient and informative dumping data structures
     requires 'Data::Dx', '>= 0.000010';
 
+    # command history in Perl debugger and in Dev::Tools::Shell
+    requires 'Term::ReadLine::Gnu', '>= 1.35';
+
 };
 
 feature 'devel:encoding', 'Modules for debugging encoding issues' => sub {
@@ -261,13 +268,6 @@ feature 'div:qrcode', 'Support for feature div:qrcode' => sub {
 
 };
 
-feature 'div:ssl', 'Support for feature div:ssl' => sub {
-    # Required for SSL connections to web and mail servers.
-    # Please consider updating to version 2.066 or higher: This version fixes email sending (bug#14357).
-    requires 'IO::Socket::SSL';
-
-};
-
 feature 'div:xslt', 'Support for feature div:xslt' => sub {
     # Required for Generic Interface XSLT mapping module.
     requires 'XML::LibXSLT';
@@ -311,13 +311,6 @@ feature 'mail:ntlm', 'Support for feature mail:ntlm' => sub {
 feature 'mail:sasl', 'Support for feature mail:sasl' => sub {
     # Required for MD5 authentication mechanisms in IMAP connections.
     requires 'Authen::SASL';
-
-};
-
-feature 'mail:ssl', 'Support for feature mail:ssl' => sub {
-    # Required for SSL connections to web and mail servers.
-    # Please consider updating to version 2.066 or higher: This version fixes email sending (bug#14357).
-    requires 'IO::Socket::SSL';
 
 };
 
@@ -387,10 +380,6 @@ feature 'optional', 'Support for feature optional' => sub {
     # Required to handle mails with several Chinese character sets.
     requires 'Encode::HanExtra', '>= 0.23';
 
-    # Required for SSL connections to web and mail servers.
-    # Please consider updating to version 2.066 or higher: This version fixes email sending (bug#14357).
-    requires 'IO::Socket::SSL';
-
     # Required for directory authentication.
     requires 'Net::LDAP';
 
@@ -411,6 +400,9 @@ feature 'optional', 'Support for feature optional' => sub {
 
     # convenient and informative dumping data structures
     requires 'Data::Dx', '>= 0.000010';
+
+    # command history in Perl debugger and in Dev::Tools::Shell
+    requires 'Term::ReadLine::Gnu', '>= 1.35';
 
     # for deeply inspecting scalars, especially strings
     requires 'Data::Peek';
@@ -474,7 +466,7 @@ feature 'optional', 'Support for feature optional' => sub {
 
 };
 
-feature 'performance:redis', 'Support for feature performance:redis' => sub {
+feature 'performance:redis', 'Modules for running with Redis Cache Server' => sub {
     # For usage with Redis Cache Server.
     requires 'Redis';
 

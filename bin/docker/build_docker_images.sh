@@ -3,7 +3,7 @@
 # --
 # OTOBO is a web-based ticketing system for service organisations.
 # --
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -20,12 +20,12 @@
 #       that the script is called by an automated Docker Hub build.
 #       Setting IMAGE_NAME is OK.
 
-# Just a small helper for building the docker images locally.
+# Just a small helper for building the OTOBO Docker images locally.
 # For productive use please use the images from Docker Hub.
 
-# The variable that are defined here follow the same convention as in
+# The variables that are defined here follow the same convention as in
 # https://docs.docker.com/docker-hub/builds/advanced/.
-# This means that local build can use the same build hook as Docker Hub builds.
+# This means that local builds can use the same build hook as builds on GitHub.
 
 # environment vars for all Docker images built by this script
 export SOURCE_BRANCH=$(git branch --show-current)   # will be empty in detached HEAD

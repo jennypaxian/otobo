@@ -170,6 +170,8 @@ ARG GIT_BRANCH=unspecified
 ARG GIT_COMMIT=unspecified
 RUN install -d var/stats var/packages var/article var/tmp \
     && (echo ". ~/.bash_completion" >> .bash_aliases ) \
+    && (echo "alias ..='cd ..'"     >> .bash_aliases ) \
+    && (echo "alias ...='cd ../..'" >> .bash_aliases ) \
     && install -m u=rw,g=r,o=r scripts/vim/.vimrc .vimrc \
     && (echo $GIT_REPO   > git-repo.txt) \
     && (echo $GIT_BRANCH > git-branch.txt) \
@@ -214,9 +216,19 @@ RUN apt-get update\
 # Clean up the .cpanm dir after the installation tasks as that dir is no longer needed
 # and the unpacked Perl distributions sometimes have weird user and group IDs.
 WORKDIR /opt/otobo_install
-RUN cpanm --local-lib local Authen::Krb5::Simple\
- && cpanm --local-lib local LWP::Authen::Negotiate\
- && rm -rf "/root/.cpanm"
+RUN <<END_BASH bash
+    set -eux
+
+    (
+        echo "requires 'Authen::Krb5::Simple';"
+        echo "requires 'LWP::Authen::Negotiate';"
+    ) >> cpanfile
+
+    PERL_CPANM_OPT="--local-lib /opt/otobo_install/local"
+    carton install
+
+    rm -rf "/root/.cpanm"
+END_BASH
 
 # perform build steps that can be done as the user otobo.
 USER $OTOBO_USER

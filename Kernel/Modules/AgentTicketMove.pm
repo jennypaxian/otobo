@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1069,6 +1069,7 @@ sub Run {
         TicketID           => $Self->{TicketID},
         SendNoNotification => $GetParam{NewUserID},
         Comment            => $BodyAsText,
+        Action             => $Self->{Action},
     );
     if ( !$Move ) {
         return $LayoutObject->ErrorScreen();
@@ -1719,6 +1720,13 @@ sub AgentMove {
 
         $LoadedFormDraft->{ChangeByName} = $Kernel::OM->Get('Kernel::System::User')->UserName(
             UserID => $LoadedFormDraft->{ChangeBy},
+        );
+    }
+
+    # explanatory message about asterisk
+    if ( $ConfigObject->Get('Ticket::Frontend::AsteriskExplanation') ) {
+        $LayoutObject->Block(
+            Name => 'AsteriskExplanation',
         );
     }
 

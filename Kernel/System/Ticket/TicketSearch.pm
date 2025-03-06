@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2024 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -1551,10 +1551,25 @@ sub TicketSearch {
                         $DBObject->Quote( $DynamicField->{ID}, 'Integer' ) . ") ";
                 }
                 else {
-                    $SQLFrom .= "INNER JOIN dynamic_field_value dfv$DynamicFieldJoinCounter
-                        ON (st.id = dfv$DynamicFieldJoinCounter.object_id
+
+                    if ( $DynamicField->{FieldType} eq 'Lens' ) {
+
+                        $SQLFrom .= "INNER JOIN dynamic_field_value lensdfv$DynamicFieldJoinCounter
+                            ON ( st.id = lensdfv$DynamicFieldJoinCounter.object_id
+                            AND lensdfv$DynamicFieldJoinCounter.field_id = " .
+                            $DynamicField->{Config}->{ReferenceDF} . " )
+                            INNER JOIN dynamic_field_value dfv$DynamicFieldJoinCounter
+                            ON ( lensdfv$DynamicFieldJoinCounter.value_int = dfv$DynamicFieldJoinCounter.object_id
                             AND dfv$DynamicFieldJoinCounter.field_id = " .
-                        $DBObject->Quote( $DynamicField->{ID}, 'Integer' ) . ") ";
+                            $DynamicField->{Config}->{AttributeDF} . " ) ";
+                    }
+                    else {
+
+                        $SQLFrom .= "INNER JOIN dynamic_field_value dfv$DynamicFieldJoinCounter
+                            ON (st.id = dfv$DynamicFieldJoinCounter.object_id
+                                AND dfv$DynamicFieldJoinCounter.field_id = " .
+                            $DBObject->Quote( $DynamicField->{ID}, 'Integer' ) . ") ";
+                    }
                 }
             }
             elsif ( $DynamicField->{ObjectType} eq 'Article' ) {
